@@ -1,4 +1,5 @@
 // src/pages/admin/DashboardPage.jsx
+import ApplicationDetailModal from '../../components/admin/ApplicationDetailModal'
 import React, { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
@@ -8,6 +9,9 @@ import {
   Layers3,
   Pencil,
   X,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
 } from 'lucide-react'
 
 import { supabase } from '../../lib/supabase'
@@ -35,205 +39,14 @@ function StatCard({ title, value, icon: Icon }) {
   )
 }
 
-function Toggle({ value, onChange }) {
-  const isPaid = value === 'Paid'
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(isPaid ? 'Pending' : 'Paid')}
-      className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-      aria-label="Toggle payment status"
-    >
-      <span
-        className={[
-          'relative inline-flex h-6 w-11 items-center rounded-full transition',
-          isPaid ? 'bg-emerald-500' : 'bg-slate-300',
-        ].join(' ')}
-      >
-        <span
-          className={[
-            'inline-block h-5 w-5 rounded-full bg-white shadow transition',
-            isPaid ? 'translate-x-5' : 'translate-x-1',
-          ].join(' ')}
-        />
-      </span>
-      <span>{value}</span>
-    </button>
-  )
-}
+function getAppCostDisplay(app) {
+  const t = String(app?.cost_text || '').trim()
+  if (t) return t
 
-function ApplicationDetailModal({ open, application, onClose, onSaved }) {
-  const [saving, setSaving] = useState(false)
-  const [status, setStatus] = useState(application?.status || 'Submitted')
-  const [paymentStatus, setPaymentStatus] = useState(application?.payment_status || 'Pending')
+  const n = Number(app?.cost)
+  if (Number.isFinite(n)) return formatCurrency(n)
 
-  useEffect(() => {
-    if (!open) return
-    setStatus(application?.status || 'Submitted')
-    setPaymentStatus(application?.payment_status || 'Pending')
-  }, [open, application])
-
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e) => {
-      if (e.key === 'Escape') onClose?.()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [open, onClose])
-
-  const handleSave = async () => {
-    if (!application?.id) return
-    if (!STATUS_OPTIONS.includes(status) || status === 'All') {
-      toast.error('Please select a valid status')
-      return
-    }
-    if (!PAYMENT_OPTIONS.includes(paymentStatus)) {
-      toast.error('Please select a valid payment status')
-      return
-    }
-
-    try {
-      setSaving(true)
-
-      const { error } = await supabase
-        .from('applications')
-        .update({
-          status,
-          payment_status: paymentStatus,
-        })
-        .eq('id', application.id)
-
-      if (error) throw error
-
-      toast.success('Application updated!')
-      onSaved?.()
-      onClose?.()
-    } catch (err) {
-      console.error('Update application error:', err)
-      toast.error(err.message || 'Something went wrong')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (!open || !application) return null
-
-  return (
-    <div className="fixed inset-0 z-[60]">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
-      <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 bg-white shadow-[0_22px_60px_rgba(2,6,23,0.25)]">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <Pencil className="h-5 w-5 text-[#1e3a5f]" />
-            <h3 className="text-base font-extrabold text-slate-900">Application Details</h3>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
-            aria-label="Close modal"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="px-6 py-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Application ID</p>
-              <p className="mt-1 text-sm font-extrabold text-slate-900">
-                {application.application_id}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Name</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{application.name}</p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Contact / Phone</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{application.phone}</p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Service</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                {application.service_name}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Cost</p>
-              <p className="mt-1 text-sm font-extrabold text-slate-900">
-                {formatCurrency(application.cost)}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Created Date</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                {formatDate(application.created_at)}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Completed Date</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                {application.completed_at ? formatDate(application.completed_at) : '—'}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Application Status</p>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-              >
-                {STATUS_OPTIONS.filter((s) => s !== 'All').map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-
-              <div className="mt-3">
-                <Badge status={status}>{status}</Badge>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <p className="text-xs font-semibold text-slate-500">Payment Status</p>
-              <div className="mt-2">
-                <Toggle value={paymentStatus} onChange={setPaymentStatus} />
-              </div>
-              <div className="mt-3">
-                <Badge status={paymentStatus}>{paymentStatus}</Badge>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <Button variant="secondary" onClick={onClose} disabled={saving}>
-              Close
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </span>
-              ) : (
-                'Save Changes'
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  return '—'
 }
 
 export default function DashboardPage() {
@@ -287,7 +100,6 @@ export default function DashboardPage() {
       setServiceOptions((data || []).map((s) => s.name))
     } catch (err) {
       console.error('Services filter error:', err)
-      // non-blocking
     }
   }
 
@@ -338,7 +150,6 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-3xl font-extrabold text-slate-900">Dashboard Overview</h1>
 
-        {/* Stat cards */}
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Total Applications"
@@ -363,7 +174,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Applications */}
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-extrabold text-slate-900">Recent Applications</h2>
@@ -462,7 +272,7 @@ export default function DashboardPage() {
                         {app.service_name}
                       </td>
                       <td className="px-5 py-4 text-sm font-semibold text-slate-600">
-                        {formatCurrency(app.cost)}
+                        {getAppCostDisplay(app)}
                       </td>
                       <td className="px-5 py-4 text-sm font-semibold text-slate-600">
                         {formatDate(app.created_at)}
@@ -491,12 +301,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <ApplicationDetailModal
-        open={modalOpen}
-        application={selectedApp}
-        onClose={closeModal}
-        onSaved={fetchApplications}
-      />
+    <ApplicationDetailModal
+      open={modalOpen}
+      application={selectedApp}
+      onClose={closeModal}
+      onSaved={fetchApplications}
+    />
+
     </div>
   )
 }

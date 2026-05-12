@@ -86,6 +86,21 @@ function DateRangePopover({
   )
 }
 
+function getRowAmountDisplay(row) {
+  // Paid => always show paid_amount (Policy 1)
+  if (row?.payment_status === 'Paid') {
+    const paid = Number(row?.paid_amount)
+    return Number.isFinite(paid) ? formatCurrency(paid) : '—'
+  }
+
+  // Pending => show cost_text if present, else numeric cost, else —
+  const costText = String(row?.cost_text || '').trim()
+  if (costText) return costText
+
+  const cost = Number(row?.cost)
+  return Number.isFinite(cost) ? formatCurrency(cost) : '—'
+}
+
 export default function RevenuePage() {
   const navigate = useNavigate()
   const { admin } = useAuth()
@@ -94,8 +109,12 @@ export default function RevenuePage() {
   const [loadingStats, setLoadingStats] = useState(true)
   const [loadingTable, setLoadingTable] = useState(true)
 
+  // paidApps used for stat calculations (paid_amount + created_at)
   const [paidApps, setPaidApps] = useState([])
-  const [pendingTotal, setPendingTotal] = useState(0)
+
+  // pending stats
+  const [pendingKnownTotal, setPendingKnownTotal] = useState(0)
+  const [pendingUnknownCount, setPendingUnknownCount] = useState(0)
 
   const [tableRows, setTableRows] = useState([])
 
@@ -111,14 +130,15 @@ export default function RevenuePage() {
   const currentMonth = useMemo(() => new Date().getMonth(), [])
   const currentYear = useMemo(() => new Date().getFullYear(), [])
 
+  // ✅ Revenue is based on paid_amount (Policy 1)
   const totalRevenue = useMemo(() => {
-    return (paidApps || []).reduce((sum, a) => sum + Number(a.cost || 0), 0)
+    return (paidApps || []).reduce((sum, a) => sum + Number(a.paid_amount || 0), 0)
   }, [paidApps])
 
   const todayRevenue = useMemo(() => {
     return (paidApps || [])
       .filter((a) => new Date(a.created_at).toDateString() === todayKey)
-      .reduce((sum, a) => sum + Number(a.cost || 0), 0)
+      .reduce((sum, a) => sum + Number(a.paid_amount || 0), 0)
   }, [paidApps, todayKey])
 
   const monthRevenue = useMemo(() => {
@@ -127,34 +147,50 @@ export default function RevenuePage() {
         const d = new Date(a.created_at)
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear
       })
-      .reduce((sum, a) => sum + Number(a.cost || 0), 0)
+      .reduce((sum, a) => sum + Number(a.paid_amount || 0), 0)
   }, [paidApps, currentMonth, currentYear])
+
+  const pendingCardValue = useMemo(() => {
+    const base = formatCurrency(pendingKnownTotal)
+    if (pendingUnknownCount > 0) return `${base} + ${pendingUnknownCount} unknown`
+    return base
+  }, [pendingKnownTotal, pendingUnknownCount])
 
   const fetchStats = async () => {
     try {
       setLoadingStats(true)
 
+      // Paid: only what we need for sums
       const { data: paidData, error: paidError } = await supabase
         .from('applications')
-        .select('*')
+        .select('paid_amount, created_at')
         .eq('payment_status', 'Paid')
         .order('created_at', { ascending: false })
 
       if (paidError) throw paidError
       setPaidApps(paidData || [])
 
+      // Pending: use numeric cost for known sum, and count unknown (text/no numeric)
       const { data: pendingData, error: pendingError } = await supabase
         .from('applications')
-        .select('cost')
+        .select('cost, cost_text')
         .eq('payment_status', 'Pending')
 
       if (pendingError) throw pendingError
 
-      const pendingSum = (pendingData || []).reduce(
-        (sum, a) => sum + Number(a.cost || 0),
-        0
-      )
-      setPendingTotal(pendingSum)
+      const pendingSum = (pendingData || []).reduce((sum, a) => {
+        const n = Number(a.cost)
+        return sum + (Number.isFinite(n) ? n : 0)
+      }, 0)
+
+      const unknown = (pendingData || []).filter((a) => {
+        const hasNumeric = Number.isFinite(Number(a.cost))
+        const hasText = String(a.cost_text || '').trim().length > 0
+        return !hasNumeric && hasText
+      }).length
+
+      setPendingKnownTotal(pendingSum)
+      setPendingUnknownCount(unknown)
     } catch (err) {
       console.error('Revenue stats error:', err)
       toast.error(err.message || 'Failed to load revenue')
@@ -182,7 +218,7 @@ export default function RevenuePage() {
 
       let query = supabase
         .from('applications')
-        .select('application_id,name,service_name,cost,payment_status,created_at')
+        .select('application_id,name,service_name,cost,cost_text,paid_amount,payment_status,created_at')
         .order('created_at', { ascending: false })
 
       if (statusFilter === 'Paid') query = query.eq('payment_status', 'Paid')
@@ -212,7 +248,6 @@ export default function RevenuePage() {
   }
 
   useEffect(() => {
-    // Defensive: even if route guard is removed, block for agents
     if (!isAdmin) return
     fetchStats()
     fetchServices()
@@ -263,7 +298,7 @@ export default function RevenuePage() {
         />
         <RevenueCard
           title="Pending Payments"
-          value={loadingStats ? '—' : formatCurrency(pendingTotal)}
+          value={loadingStats ? '—' : pendingCardValue}
           accent="text-amber-500"
         />
       </div>
@@ -369,7 +404,7 @@ export default function RevenuePage() {
                       {row.service_name}
                     </td>
                     <td className="px-6 py-5 text-lg font-extrabold text-slate-900">
-                      {formatCurrency(row.cost)}
+                      {getRowAmountDisplay(row)}
                     </td>
                     <td className="px-6 py-5">
                       <Badge status={row.payment_status}>{row.payment_status}</Badge>

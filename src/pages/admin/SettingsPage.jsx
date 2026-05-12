@@ -1,11 +1,12 @@
 // src/pages/admin/SettingsPage.jsx
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { ChevronDown, Image as ImageIcon } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 
 import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import { useAuth } from '../../context/AuthContext'
+import { SERVICE_CATEGORIES } from '../../utils/serviceCardConfig'
 
 const STATUS_OPTIONS = ['Submitted', 'In Process', 'On Hold']
 
@@ -46,6 +47,28 @@ function CardShell({ title, children, disabled = false }) {
   )
 }
 
+function normalizeCategoryOrder(inputOrder) {
+  const allowed = SERVICE_CATEGORIES.map((c) => c.key)
+  const seen = new Set()
+
+  const base = Array.isArray(inputOrder) ? inputOrder : []
+  const cleaned = base
+    .map((x) => String(x || '').trim())
+    .filter((k) => allowed.includes(k))
+    .filter((k) => {
+      if (seen.has(k)) return false
+      seen.add(k)
+      return true
+    })
+
+  // Ensure all categories exist in the order (append missing)
+  for (const k of allowed) {
+    if (!seen.has(k)) cleaned.push(k)
+  }
+
+  return cleaned
+}
+
 export default function SettingsPage() {
   const { admin } = useAuth()
   const isAdmin = String(admin?.role || '').toLowerCase() === 'admin'
@@ -61,13 +84,23 @@ export default function SettingsPage() {
   const [contact, setContact] = useState('')
   const [email, setEmail] = useState('')
 
-  // Branding (NEW)
+  // Branding
   const [logoIconUrl, setLogoIconUrl] = useState('')
   const [logoWordmarkUrl, setLogoWordmarkUrl] = useState('')
 
   // Preferences
   const [defaultStatus, setDefaultStatus] = useState('Submitted')
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+
+  // NEW: Homepage category order
+  const [categoryOrder, setCategoryOrder] = useState(
+    normalizeCategoryOrder(['id', 'business', 'agri', 'financial', 'utility'])
+  )
+
+  const categoryLabelByKey = useMemo(() => {
+    const map = new Map(SERVICE_CATEGORIES.map((c) => [c.key, c.label]))
+    return map
+  }, [])
 
   const fetchSettings = async () => {
     try {
@@ -86,6 +119,8 @@ export default function SettingsPage() {
 
       setDefaultStatus(data?.default_status || 'Submitted')
       setNotificationsEnabled(Boolean(data?.notifications))
+
+      setCategoryOrder(normalizeCategoryOrder(data?.homepage_category_order))
     } catch (err) {
       console.error('Fetch settings error:', err)
       toast.error(err.message || 'Failed to load settings')
@@ -140,6 +175,22 @@ export default function SettingsPage() {
     }
   }
 
+  const moveCategory = (key, dir) => {
+    setCategoryOrder((prev) => {
+      const idx = prev.indexOf(key)
+      if (idx === -1) return prev
+      const next = [...prev]
+      const target = dir === 'up' ? idx - 1 : idx + 1
+      if (target < 0 || target >= next.length) return prev
+      ;[next[idx], next[target]] = [next[target], next[idx]]
+      return next
+    })
+  }
+
+  const resetCategoryOrder = () => {
+    setCategoryOrder(normalizeCategoryOrder(['id', 'business', 'agri', 'financial', 'utility']))
+  }
+
   const savePrefs = async () => {
     if (!isAdmin) {
       toast.error('Only admin can update settings')
@@ -150,11 +201,14 @@ export default function SettingsPage() {
     try {
       setSavingPrefs(true)
 
+      const normalized = normalizeCategoryOrder(categoryOrder)
+
       const { error } = await supabase
         .from('settings')
         .update({
           default_status: defaultStatus,
           notifications: notificationsEnabled,
+          homepage_category_order: normalized,
           updated_at: new Date().toISOString(),
         })
         .eq('id', settings.id)
@@ -230,12 +284,9 @@ export default function SettingsPage() {
             />
           </div>
 
-          {/* Branding URLs (NEW) */}
+          {/* Branding URLs */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <div className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4 text-slate-600" />
-              <p className="text-sm font-extrabold text-slate-900">Branding</p>
-            </div>
+            <p className="text-sm font-extrabold text-slate-900">Branding</p>
 
             <div className="mt-4 space-y-4">
               <div>
@@ -264,43 +315,9 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <p className="text-xs font-semibold text-slate-500">Icon Preview</p>
-                  <div className="mt-2 flex h-16 items-center justify-center rounded-md bg-slate-50">
-                    {logoIconUrl ? (
-                      <img
-                        src={logoIconUrl}
-                        alt="Logo icon preview"
-                        className="h-12 w-12 object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                      />
-                    ) : (
-                      <p className="text-xs font-semibold text-slate-400">Not set</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <p className="text-xs font-semibold text-slate-500">Wordmark Preview</p>
-                  <div className="mt-2 flex h-16 items-center justify-center rounded-md bg-slate-50 px-3">
-                    {logoWordmarkUrl ? (
-                      <img
-                        src={logoWordmarkUrl}
-                        alt="Logo wordmark preview"
-                        className="h-10 w-full max-w-[240px] object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                      />
-                    ) : (
-                      <p className="text-xs font-semibold text-slate-400">Not set</p>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <p className="text-xs font-semibold text-slate-500">
+                Tip: Use a public Supabase Storage bucket for branding images.
+              </p>
             </div>
           </div>
 
@@ -321,7 +338,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* System Preferences */}
         <CardShell title="System Preferences" disabled={!isAdmin}>
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
               <label className="mb-2 block text-sm font-extrabold text-slate-900">
                 Default Application Status
@@ -355,6 +372,63 @@ export default function SettingsPage() {
               />
             </div>
 
+            {/* Homepage Category Tab Order (NEW) */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-extrabold text-slate-900">
+                    Homepage Category Tab Order
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    Use Up/Down to reorder category tabs on the homepage.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={resetCategoryOrder}
+                  disabled={!isAdmin || savingPrefs}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {categoryOrder.map((key, idx) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
+                  >
+                    <div className="text-sm font-extrabold text-slate-800">
+                      {categoryLabelByKey.get(key) || key}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => moveCategory(key, 'up')}
+                        disabled={!isAdmin || savingPrefs || idx === 0}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label="Move up"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveCategory(key, 'down')}
+                        disabled={!isAdmin || savingPrefs || idx === categoryOrder.length - 1}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label="Move down"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="mb-2 block text-sm font-extrabold text-slate-900">
                 Enable Notifications
@@ -365,7 +439,6 @@ export default function SettingsPage() {
                   Enable SMS/WhatsApp Notifications
                 </p>
 
-                {/* disabled as per requirement */}
                 <Toggle
                   checked={notificationsEnabled}
                   disabled={true}

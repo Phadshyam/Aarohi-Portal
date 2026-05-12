@@ -1,37 +1,56 @@
 // src/pages/public/ApplyPage.jsx
-import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { ChevronDown, FileText, Loader2 } from 'lucide-react'
 
 import { supabase } from '../../lib/supabase'
+import { supabasePublic } from '../../lib/supabasePublic'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { formatCurrency } from '../../utils/helpers'
 
-const isValidEmail = (email) => {
-  const v = String(email || '').trim()
-  if (!v) return true
-  // Simple, practical email check
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+const toErrorMessage = (err) => {
+  if (!err) return 'Unknown error'
+  if (typeof err === 'string') return err
+  const msg =
+    err.message ||
+    err.error_description ||
+    err.details ||
+    err.hint ||
+    'Something went wrong'
+  const code = err.code ? ` (code: ${err.code})` : ''
+  return `${msg}${code}`
+}
+
+function getServiceCostDisplay(service) {
+  const t = String(service?.cost_text || '').trim()
+  if (t) return t
+
+  const n = Number(service?.cost)
+  if (Number.isFinite(n)) return formatCurrency(n)
+
+  return '—'
 }
 
 export default function ApplyPage() {
   const navigate = useNavigate()
+
+  const [searchParams] = useSearchParams()
+  const preselectAppliedRef = useRef(false)
 
   const [services, setServices] = useState([])
   const [servicesLoading, setServicesLoading] = useState(true)
 
   const [submitting, setSubmitting] = useState(false)
   const [successApp, setSuccessApp] = useState(null)
+  const [submitError, setSubmitError] = useState('')
 
   const [form, setForm] = useState({
     name: '',
     phone: '',
-    email: '',
     serviceId: '',
   })
-
   const [errors, setErrors] = useState({})
 
   const selectedService = useMemo(() => {
@@ -40,13 +59,28 @@ export default function ApplyPage() {
   }, [form.serviceId, services])
 
   useEffect(() => {
+    if (preselectAppliedRef.current) return
+    if (!services || services.length === 0) return
+
+    const serviceId = searchParams.get('serviceId')
+    if (!serviceId) return
+
+    const exists = services.some((s) => s.id === serviceId)
+    if (exists) {
+      setForm((p) => ({ ...p, serviceId }))
+      preselectAppliedRef.current = true
+    }
+  }, [services, searchParams, setForm])
+
+  // Fetch services
+  useEffect(() => {
     const fetchServices = async () => {
       try {
         setServicesLoading(true)
 
         const { data, error } = await supabase
           .from('services')
-          .select('id, name, cost')
+          .select('id, name, cost, cost_text')
           .eq('is_active', true)
           .order('name', { ascending: true })
 
@@ -54,7 +88,7 @@ export default function ApplyPage() {
         setServices(data || [])
       } catch (err) {
         console.error('Error fetching services:', err)
-        toast.error(err.message || 'Failed to load services')
+        toast.error(toErrorMessage(err))
       } finally {
         setServicesLoading(false)
       }
@@ -68,15 +102,12 @@ export default function ApplyPage() {
 
     const name = form.name.trim()
     const phoneDigits = form.phone.replace(/\D/g, '')
-    const email = form.email.trim()
 
     if (!name) next.name = 'Name is required'
     else if (name.length < 2) next.name = 'Name must be at least 2 characters'
 
     if (!form.phone.trim()) next.phone = 'Phone is required'
     else if (phoneDigits.length !== 10) next.phone = 'Phone must be exactly 10 digits'
-
-    if (email && !isValidEmail(email)) next.email = 'Please enter a valid email'
 
     if (!form.serviceId) next.serviceId = 'Please select a service'
 
@@ -85,55 +116,86 @@ export default function ApplyPage() {
   }
 
   const resetForm = () => {
-    setForm({ name: '', phone: '', email: '', serviceId: '' })
+    setForm({ name: '', phone: '', serviceId: '' })
     setErrors({})
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!validate()) return
-
-    if (!selectedService) {
-      toast.error('Please select a service')
-      return
-    }
+    setSubmitError('')
 
     try {
+      if (!validate()) return
+      if (!selectedService) {
+        toast.error('Please select a service')
+        return
+      }
+
       setSubmitting(true)
 
-      const payload = {
+      const numericCost = Number(selectedService.cost)
+      const costValue = Number.isFinite(numericCost) ? numericCost : null
+
+      const serviceCostText = String(selectedService.cost_text || '').trim()
+      const costTextSnapshot = serviceCostText
+        ? serviceCostText
+        : costValue !== null
+          ? String(costValue)
+          : null
+
+      const insertPayload = {
         name: form.name.trim(),
         phone: form.phone.replace(/\D/g, '').slice(0, 10),
-        email: form.email.trim() ? form.email.trim() : null,
+
         service_id: selectedService.id,
         service_name: selectedService.name,
-        cost: selectedService.cost,
+
+        // Do NOT default to 0
+        cost: costValue,
+        cost_text: costTextSnapshot,
+
         source: 'online',
       }
 
-      const { data, error } = await supabase
+      // 1) Insert
+      const { error: insertError } = await supabasePublic
         .from('applications')
-        .insert(payload)
-        .select()
-        .single()
+        .insert(insertPayload)
 
-      if (error) throw error
+      if (insertError) throw insertError
 
-      setSuccessApp(data)
+      // 2) Fetch latest application for this phone via RPC
+      const phoneDigits = insertPayload.phone
+
+      const { data: tracked, error: trackError } = await supabasePublic.rpc(
+        'track_application',
+        { search_id: null, search_phone: phoneDigits }
+      )
+
+      if (trackError) throw trackError
+
+      const latest = Array.isArray(tracked) && tracked.length > 0 ? tracked[0] : null
+      if (!latest?.application_id) {
+        setSuccessApp({ application_id: '—' })
+      } else {
+        setSuccessApp({ application_id: latest.application_id })
+      }
+
       resetForm()
     } catch (err) {
       console.error('Submit application error:', err)
-      toast.error(err.message || 'Failed to submit application')
+      const msg = toErrorMessage(err)
+      setSubmitError(msg)
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
   }
 
-  const costText = selectedService ? formatCurrency(selectedService.cost) : '₹ 0'
+  const costText = selectedService ? getServiceCostDisplay(selectedService) : '—'
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* account for fixed public navbar */}
       <div className="pt-16">
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(2,6,23,0.10)] sm:p-8">
@@ -151,6 +213,13 @@ export default function ApplyPage() {
               </div>
             </div>
 
+            {submitError ? (
+              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4">
+                <p className="text-sm font-extrabold text-red-800">Submission failed</p>
+                <p className="mt-1 text-sm font-semibold text-red-700">{submitError}</p>
+              </div>
+            ) : null}
+
             {successApp ? (
               <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
                 <p className="text-sm font-semibold text-emerald-900">
@@ -165,10 +234,7 @@ export default function ApplyPage() {
                 </p>
 
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                  <Button
-                    onClick={() => navigate('/track')}
-                    className="w-full sm:w-auto"
-                  >
+                  <Button onClick={() => navigate('/track')} className="w-full sm:w-auto">
                     Track Application
                   </Button>
                   <Button
@@ -204,22 +270,6 @@ export default function ApplyPage() {
                   autoComplete="tel"
                 />
 
-                <Input
-                  label={
-                    <span className="inline-flex items-center gap-2">
-                      Email <span className="text-xs font-semibold text-slate-400">(Optional)</span>
-                    </span>
-                  }
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="Enter email (optional)"
-                  error={errors.email}
-                  autoComplete="email"
-                />
-
-                {/* Service Select */}
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-slate-700">
                     Service
@@ -227,9 +277,7 @@ export default function ApplyPage() {
                   <div className="relative">
                     <select
                       value={form.serviceId}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, serviceId: e.target.value }))
-                      }
+                      onChange={(e) => setForm((p) => ({ ...p, serviceId: e.target.value }))}
                       className={[
                         'w-full appearance-none rounded-lg border bg-white px-3 py-2 pr-10 text-sm text-slate-900',
                         'border-slate-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20',
@@ -254,26 +302,19 @@ export default function ApplyPage() {
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   </div>
                   {errors.serviceId ? (
-                    <p className="mt-1 text-xs font-medium text-red-600">
-                      {errors.serviceId}
-                    </p>
+                    <p className="mt-1 text-xs font-medium text-red-600">{errors.serviceId}</p>
                   ) : null}
                 </div>
 
-                {/* Cost */}
                 <Input
-                  label="Cost"
+                  label="Cost / Fees"
                   value={costText}
                   readOnly
-                  hint="Auto-calculated"
+                  hint="Auto-fetched from service"
                   inputClassName="bg-slate-50 text-slate-700"
                 />
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={submitting || servicesLoading}
-                >
+                <Button type="submit" className="w-full" disabled={submitting || servicesLoading}>
                   {submitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />

@@ -1,5 +1,6 @@
 // src/pages/admin/ApplicationsPage.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import ApplicationDetailModal from '../../components/admin/ApplicationDetailModal'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
@@ -13,7 +14,6 @@ import {
 
 import { supabase } from '../../lib/supabase'
 import Badge from '../../components/ui/Badge'
-import Button from '../../components/ui/Button'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import { formatCurrency, formatDate } from '../../utils/helpers'
 
@@ -34,6 +34,16 @@ function getPageNumbers(current, total) {
   return Array.from(pages)
     .filter((p) => p >= 1 && p <= total)
     .sort((a, b) => a - b)
+}
+
+function getApplicationCostDisplay(app) {
+  const t = String(app?.cost_text || '').trim()
+  if (t) return t
+
+  const n = Number(app?.cost)
+  if (Number.isFinite(n)) return formatCurrency(n)
+
+  return '—'
 }
 
 function TogglePayment({ value, onChange }) {
@@ -58,153 +68,6 @@ function TogglePayment({ value, onChange }) {
         />
       </button>
       <span className="text-sm font-bold text-emerald-600">Paid</span>
-    </div>
-  )
-}
-
-function ApplicationDetailModal({ open, application, onClose, onSaved }) {
-  const [status, setStatus] = useState(application?.status || 'Submitted')
-  const [paymentStatus, setPaymentStatus] = useState(application?.payment_status || 'Pending')
-  const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    if (!open) return
-    setStatus(application?.status || 'Submitted')
-    setPaymentStatus(application?.payment_status || 'Pending')
-  }, [open, application])
-
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e) => e.key === 'Escape' && onClose?.()
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [open, onClose])
-
-  const handleSave = async () => {
-    if (!application?.id) return
-
-    try {
-      setSaving(true)
-
-      const { error } = await supabase
-        .from('applications')
-        .update({
-          status,
-          payment_status: paymentStatus,
-        })
-        .eq('id', application.id)
-
-      if (error) throw error
-
-      toast.success('Application updated!')
-      onSaved?.()
-      onClose?.()
-    } catch (err) {
-      console.error('Update application error:', err)
-      toast.error(err.message || 'Something went wrong')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (!open || !application) return null
-
-  return (
-    <div className="fixed inset-0 z-[70]">
-      <div className="absolute inset-0 bg-black/45" onClick={onClose} aria-hidden="true" />
-
-      <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 bg-white shadow-[0_22px_60px_rgba(2,6,23,0.25)]">
-        <div className="relative px-8 pb-5 pt-7">
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          <h3 className="text-center text-2xl font-extrabold text-slate-900">
-            Application Details
-          </h3>
-          <div className="mx-auto mt-4 h-1 w-full max-w-lg rounded bg-slate-200" />
-
-          <div className="mx-auto mt-6 max-w-lg space-y-3 text-sm">
-            {[
-              ['Application ID', application.application_id],
-              ['Name', application.name],
-              ['Contact', application.phone],
-              ['Service', application.service_name],
-              ['Cost', formatCurrency(application.cost)],
-              ['Created Date', formatDate(application.created_at)],
-              ['Completed Date', application.completed_at ? formatDate(application.completed_at) : '—'],
-            ].map(([label, value]) => (
-              <div key={label} className="grid grid-cols-[180px_1fr] gap-6">
-                <div className="font-semibold text-slate-600">{label}</div>
-                <div className="font-extrabold text-slate-900">{value}</div>
-              </div>
-            ))}
-
-            <div className="grid grid-cols-[180px_1fr] gap-6 pt-2">
-              <div className="font-semibold text-slate-600">Application Status</div>
-              <div>
-                <div className="font-extrabold text-slate-900">{status}</div>
-
-                <div className="mt-3 inline-block">
-                  <div className="relative">
-                    <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value)}
-                      className="h-11 w-48 appearance-none rounded-lg border border-slate-200 bg-white px-4 pr-10 text-sm font-semibold text-slate-800 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-                    >
-                      {STATUS_OPTIONS.filter((o) => o.value !== 'all').map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-[180px_1fr] gap-6 pt-2">
-              <div className="font-semibold text-slate-600">Payment Status</div>
-              <div>
-                <TogglePayment value={paymentStatus} onChange={setPaymentStatus} />
-              </div>
-            </div>
-          </div>
-
-          <div className="mx-auto mt-10 flex max-w-lg items-center justify-center gap-5">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="inline-flex h-11 min-w-[170px] items-center justify-center rounded-lg bg-[#1e3a5f] px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[#16304f] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {saving ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </span>
-              ) : (
-                'Save Changes'
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={saving}
-              className="inline-flex h-11 min-w-[140px] items-center justify-center rounded-lg border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
@@ -331,7 +194,6 @@ export default function ApplicationsPage() {
         setServices((data || []).map((s) => s.name))
       } catch (err) {
         console.error('Fetch services error:', err)
-        // non-blocking
       }
     }
     fetchServices()
@@ -406,7 +268,6 @@ export default function ApplicationsPage() {
         <h1 className="text-3xl font-extrabold text-slate-900">Applications</h1>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-          {/* Filters */}
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -546,7 +407,7 @@ export default function ApplicationsPage() {
                       {app.service_name}
                     </td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">
-                      {formatCurrency(app.cost)}
+                      {getApplicationCostDisplay(app)}
                     </td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">
                       {formatDate(app.created_at)}
@@ -624,12 +485,13 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      <ApplicationDetailModal
-        open={modalOpen}
-        application={selected}
-        onClose={closeModal}
-        onSaved={fetchApplications}
-      />
+    <ApplicationDetailModal
+      open={modalOpen}
+      application={selected}
+      onClose={closeModal}
+      onSaved={fetchApplications}
+    />
+
     </div>
   )
 }

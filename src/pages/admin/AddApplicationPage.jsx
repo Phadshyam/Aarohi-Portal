@@ -9,6 +9,16 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { formatCurrency } from '../../utils/helpers'
 
+function getServiceCostDisplay(service) {
+  const t = String(service?.cost_text || '').trim()
+  if (t) return t
+
+  const n = Number(service?.cost)
+  if (Number.isFinite(n)) return formatCurrency(n)
+
+  return '—'
+}
+
 export default function AddApplicationPage() {
   const navigate = useNavigate()
 
@@ -35,7 +45,7 @@ export default function AddApplicationPage() {
 
         const { data, error } = await supabase
           .from('services')
-          .select('id, name, cost')
+          .select('id, name, cost, cost_text')
           .eq('is_active', true)
           .order('name', { ascending: true })
 
@@ -82,6 +92,18 @@ export default function AddApplicationPage() {
     try {
       setCreating(true)
 
+      // numeric cost if available, else null (never default to 0)
+      const numericCost = Number(selectedService.cost)
+      const costValue = Number.isFinite(numericCost) ? numericCost : null
+
+      // snapshot cost_text if set, else snapshot numeric cost as text, else null
+      const serviceCostText = String(selectedService.cost_text || '').trim()
+      const costTextSnapshot = serviceCostText
+        ? serviceCostText
+        : costValue !== null
+          ? String(costValue)
+          : null
+
       const { data, error } = await supabase
         .from('applications')
         .insert({
@@ -89,7 +111,10 @@ export default function AddApplicationPage() {
           phone: form.phone.replace(/\D/g, '').slice(0, 10),
           service_id: selectedService.id,
           service_name: selectedService.name,
-          cost: selectedService.cost,
+
+          cost: costValue,
+          cost_text: costTextSnapshot,
+
           source: 'offline',
         })
         .select()
@@ -108,7 +133,7 @@ export default function AddApplicationPage() {
     }
   }
 
-  const costText = selectedService ? formatCurrency(selectedService.cost) : '₹ 0'
+  const costText = selectedService ? getServiceCostDisplay(selectedService) : '—'
 
   return (
     <div>
@@ -149,8 +174,10 @@ export default function AddApplicationPage() {
                   className={[
                     'h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm',
                     'focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20',
-                    (servicesLoading || creating) ? 'bg-slate-50 text-slate-500' : '',
-                    errors.serviceId ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : '',
+                    servicesLoading || creating ? 'bg-slate-50 text-slate-500' : '',
+                    errors.serviceId
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
+                      : '',
                   ].join(' ')}
                 >
                   <option value="">
@@ -173,7 +200,7 @@ export default function AddApplicationPage() {
 
             {/* Cost */}
             <div>
-              <p className="text-sm font-semibold text-slate-400">Auto-calculated</p>
+              <p className="text-sm font-semibold text-slate-400">Auto-fetched</p>
               <input
                 value={costText}
                 readOnly
