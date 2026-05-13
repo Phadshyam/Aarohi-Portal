@@ -196,8 +196,7 @@ export default function ApplyPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="pt-16">
-        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(2,6,23,0.10)] sm:p-8">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50">
@@ -332,7 +331,6 @@ export default function ApplyPage() {
             )}
           </div>
         </div>
-      </div>
     </div>
   )
 }

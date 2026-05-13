@@ -18,9 +18,9 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const [branding, setBranding] = useState({
-    business_name: '',
-    logo_icon_url: '',
-    logo_wordmark_url: '',
+    business_name: 'Aarohi Multiservices',
+    logo_icon_url: '/default-icon.png',
+    logo_wordmark_url: '/default-wordmark.png',
   })
   const [iconFailed, setIconFailed] = useState(false)
   const [wordmarkFailed, setWordmarkFailed] = useState(false)

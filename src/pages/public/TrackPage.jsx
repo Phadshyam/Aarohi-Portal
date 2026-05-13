@@ -80,9 +80,7 @@ export default function TrackPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* account for fixed public navbar */}
-      <div className="pt-16">
-        <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-2xl">
             {/* Search card */}
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(2,6,23,0.10)] sm:p-8">
@@ -197,6 +195,5 @@ export default function TrackPage() {
           </div>
         </div>
       </div>
-    </div>
   )
 }

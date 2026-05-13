@@ -18,9 +18,9 @@ export default function Footer({ services = [] }) {
     business_name: 'Aarohi Multiservices',
     contact: '',
     email: '',
-    logo_icon_url: '',
-    logo_wordmark_url: '',
-  })
+    logo_icon_url: '/default-icon.png',
+    logo_wordmark_url: '/default-wordmark.png',
+  });
   const [iconFailed, setIconFailed] = useState(false)
   const [wordmarkFailed, setWordmarkFailed] = useState(false)
 
@@ -43,8 +43,13 @@ export default function Footer({ services = [] }) {
     fetchBranding()
   }, [])
 
-  const iconSrc = (branding.logo_icon_url || '/logo.png').trim()
-  const wordmarkSrc = (branding.logo_wordmark_url || '').trim()
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+
+  const iconSrc =
+    `${SUPABASE_URL}/storage/v1/object/public/branding/logo-icon-dark.png`
+
+  const wordmarkSrc =
+    `${SUPABASE_URL}/storage/v1/object/public/branding/logo-wordmark-dark.png`
 
   useEffect(() => setIconFailed(false), [iconSrc])
   useEffect(() => setWordmarkFailed(false), [wordmarkSrc])

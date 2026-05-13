@@ -35,9 +35,9 @@ const AppLoading = () => (
 )
 
 // Components (lazy when they exist; placeholders otherwise)
-const Navbar = lazyFromGlob(
-  './components/layout/Navbar.jsx',
-  makePlaceholder('Navbar')
+const Header = lazyFromGlob(
+  './components/layout/Header.jsx',
+  makePlaceholder('Header')
 )
 
 const ProtectedRoute = lazyFromGlob(
@@ -118,7 +118,7 @@ const SettingsPage = lazyFromGlob(
 function PublicLayout() {
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
+      <Header />
       <main className="w-full">
         <Outlet />
       </main>

@@ -1,6 +1,6 @@
 // src/pages/public/HomePage.jsx
-import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   CheckCircle2,
@@ -13,6 +13,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { HOME_OPEN_SERVICE_ID } from '../../navigation/homeServiceIntent'
 import Footer from '../../components/layout/Footer'
 import { formatCurrency } from '../../utils/helpers'
 import { getServiceIcon, getServiceBadges } from '../../utils/serviceCardConfig'
@@ -320,13 +321,17 @@ function ServiceDetailsModal({ open, service, onClose, onApply }) {
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [services, setServices] = useState([])
   const [loading, setLoading] = useState(true)
 
   const [branding, setBranding] = useState({
+    business_name: 'Aarohi Multiservices',
     contact: '+91 8446140598',
     email: '',
+    logo_icon_url: '/default-icon.png',
+    logo_wordmark_url: '/default-wordmark.png',
   })
 
   const [selectedService, setSelectedService] = useState(null)
@@ -372,6 +377,17 @@ export default function HomePage() {
     }
     fetchServices()
   }, [])
+
+  useEffect(() => {
+    const hash = (location.hash || '').replace(/^#/, '')
+    if (!hash) return
+    const el = document.getElementById(hash)
+    if (!el) return
+    const t = window.setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 0)
+    return () => window.clearTimeout(t)
+  }, [location.hash, location.pathname])
 
   useEffect(() => {
     const fetchBranding = async () => {
@@ -437,15 +453,46 @@ export default function HomePage() {
     })
   }, [enhancedServices, activeTab, serviceQuery])
 
-  const openService = (service) => {
+  const openServiceIntentId = location.state?.[HOME_OPEN_SERVICE_ID]
+
+  useEffect(() => {
+    if (openServiceIntentId == null || openServiceIntentId === '') return
+    if (loading) return
+
+    const idStr = String(openServiceIntentId)
+    const match = enhancedServices.find((s) => String(s.id) === idStr)
+
+    const clearIntent = () => {
+      navigate({ pathname: '/', hash: 'services', search: location.search }, { replace: true, state: {} })
+    }
+
+    if (!match) {
+      toast.error('That service is not available.')
+      clearIntent()
+      return
+    }
+
+    const visible = filtered.some((s) => String(s.id) === idStr)
+    if (!visible) {
+      setActiveTab('all')
+      setServiceQuery('')
+      return
+    }
+
+    setSelectedService(match)
+    setModalOpen(true)
+    clearIntent()
+  }, [openServiceIntentId, loading, enhancedServices, filtered, navigate, location.search])
+
+  const openService = useCallback((service) => {
     setSelectedService(service)
     setModalOpen(true)
-  }
+  }, [])
 
-  const closeService = () => {
+  const closeService = useCallback(() => {
     setModalOpen(false)
     setSelectedService(null)
-  }
+  }, [])
 
   const applyForService = () => {
     if (!selectedService?.id) return
@@ -454,7 +501,6 @@ export default function HomePage() {
 
   return (
     <div className="bg-white">
-      <div className="pt-16">
         {/* HERO */}
         <section className="bg-[#eef4ff]">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
@@ -488,7 +534,7 @@ export default function HomePage() {
         </section>
 
         {/* SERVICES */}
-        <section id="services" className="bg-slate-50/40">
+        <section id="services" className="scroll-mt-16 bg-slate-50/40">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <div className="text-center">
               <h2 className="text-3xl font-extrabold text-[#1e3a5f] sm:text-4xl">
@@ -578,6 +624,7 @@ export default function HomePage() {
                     return (
                       <button
                         key={service.id}
+                        id={`home-service-${service.id}`}
                         type="button"
                         onClick={() => openService(service)}
                         className={cx(
@@ -635,7 +682,7 @@ export default function HomePage() {
         </section>
 
         {/* TRACK */}
-        <section id="track" className="bg-white">
+        <section id="track" className="scroll-mt-16 bg-white">
           <div className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
             <div className="rounded-3xl border border-slate-200 bg-[#f6f9ff] px-6 py-10 text-center shadow-[0_12px_30px_rgba(2,6,23,0.06)] sm:px-10">
               <h2 className="text-2xl font-extrabold text-[#1e3a5f] sm:text-3xl">
@@ -658,7 +705,7 @@ export default function HomePage() {
         </section>
 
         {/* WHY CHOOSE US */}
-        <section id="about" className="bg-white">
+        <section id="about" className="scroll-mt-16 bg-white">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <div className="text-center">
               <h2 className="text-3xl font-extrabold text-[#1e3a5f] sm:text-4xl">
@@ -694,7 +741,7 @@ export default function HomePage() {
         </section>
 
         {/* CONTACT */}
-        <section id="contact" className="bg-white">
+        <section id="contact" className="scroll-mt-16 bg-white">
           <div className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
             <div className="text-center">
               <h2 className="text-3xl font-extrabold text-[#1e3a5f] sm:text-4xl">
@@ -755,7 +802,6 @@ export default function HomePage() {
           onClose={closeService}
           onApply={applyForService}
         />
-      </div>
     </div>
   )
 }

@@ -1,6 +1,8 @@
 // src/pages/admin/LoginPage.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Header from '../../components/layout/Header'
+import BrandLogo from '../../components/common/BrandLogo'
 import { Eye, EyeOff, Loader2, AlertCircle, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@supabase/supabase-js'
@@ -65,45 +67,12 @@ export default function LoginPage() {
   // prevent double triggers
   const inFlightRef = useRef(false)
 
-  // branding
-  const [branding, setBranding] = useState({
-    business_name: '',
-    logo_icon_url: '',
-    logo_wordmark_url: '',
-  })
-  const [iconFailed, setIconFailed] = useState(false)
-  const [wordmarkFailed, setWordmarkFailed] = useState(false)
-
   const cleanEmail = useMemo(() => String(email || '').trim().toLowerCase(), [email])
   const trustedUntil = useMemo(
     () => (typeof window !== 'undefined' && cleanEmail ? getTrustedUntil(cleanEmail) : 0),
     [cleanEmail]
   )
   const trustValid = trustedUntil && trustedUntil > Date.now()
-
-  const iconSrc = (branding.logo_icon_url || '/logo.png').trim()
-  const wordmarkSrc = (branding.logo_wordmark_url || '').trim()
-
-  useEffect(() => setIconFailed(false), [iconSrc])
-  useEffect(() => setWordmarkFailed(false), [wordmarkSrc])
-
-  // Branding fetch (pre-login safe)
-  useEffect(() => {
-    const fetchBranding = async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_public_branding')
-        if (error) throw error
-        setBranding({
-          business_name: data?.business_name || '',
-          logo_icon_url: data?.logo_icon_url || '',
-          logo_wordmark_url: data?.logo_wordmark_url || '',
-        })
-      } catch (e) {
-        console.error('Branding fetch error:', e)
-      }
-    }
-    fetchBranding()
-  }, [])
 
   useEffect(() => {
     return () => {
@@ -206,8 +175,8 @@ export default function LoginPage() {
     // In-memory storage so temp client cannot affect main client
     const memoryStorage = {
       getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
+      setItem: () => { },
+      removeItem: () => { },
     }
 
     const temp = createClient(url, key, {
@@ -390,39 +359,13 @@ export default function LoginPage() {
   if (authReady && (isAuthenticated || profileLoading)) {
     return (
       <div className="flex min-h-screen flex-col bg-gray-50">
-        <div className="px-6 pt-6">
-          <div className="flex items-center gap-3">
-            {!iconFailed ? (
-              <img
-                key={iconSrc}
-                src={iconSrc}
-                alt="Logo"
-                className="h-12 w-12 shrink-0 object-contain scale-[1.25] drop-shadow-sm"
-                onError={() => setIconFailed(true)}
-              />
-            ) : (
-              <div className="flex h-12 w-12 items-center justify-center">
-                <span className="text-base font-extrabold text-[#1e3a5f]">A</span>
-              </div>
-            )}
+        <Header />
 
-            {!wordmarkFailed && wordmarkSrc ? (
-              <img
-                key={wordmarkSrc}
-                src={wordmarkSrc}
-                alt={branding.business_name || 'Aarohi Multiservices'}
-                className="h-10 w-auto max-w-[260px] object-contain"
-                onError={() => setWordmarkFailed(true)}
-              />
-            ) : null}
-          </div>
-        </div>
-
-        <div className="flex flex-1 items-center justify-center px-4 py-10">
+        <div className="flex flex-1 items-center justify-center px-4 py-8 sm:py-10">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white px-8 py-10 shadow-[0_22px_55px_rgba(2,6,23,0.12)]">
-            <h1 className="text-center text-2xl font-extrabold text-slate-900">
-              You’re already logged in
-            </h1>
+            <div className="px-6 pt-6">
+              <BrandLogo clickable={false} />
+            </div>
 
             <p className="mt-3 text-center text-sm font-semibold text-slate-500">
               {profileLoading
@@ -518,36 +461,9 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Logo */}
-      <div className="px-6 pt-6">
-        <div className="flex items-center gap-3">
-          {!iconFailed ? (
-            <img
-              key={iconSrc}
-              src={iconSrc}
-              alt="Logo"
-              className="h-12 w-12 shrink-0 object-contain scale-[1.25] drop-shadow-sm"
-              onError={() => setIconFailed(true)}
-            />
-          ) : (
-            <div className="flex h-12 w-12 items-center justify-center">
-              <span className="text-base font-extrabold text-[#1e3a5f]">A</span>
-            </div>
-          )}
+      <Header />
 
-          {!wordmarkFailed && wordmarkSrc ? (
-            <img
-              key={wordmarkSrc}
-              src={wordmarkSrc}
-              alt={branding.business_name || 'Aarohi Multiservices'}
-              className="h-10 w-auto max-w-[260px] object-contain"
-              onError={() => setWordmarkFailed(true)}
-            />
-          ) : null}
-        </div>
-      </div>
-
-      <div className="flex flex-1 items-center justify-center px-4 py-10">
+      <div className="flex flex-1 items-center justify-center px-4 py-8 sm:py-10">
         <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white px-8 py-10 shadow-[0_22px_55px_rgba(2,6,23,0.12)]">
           <h1 className="text-center text-3xl font-extrabold text-slate-900">Admin Login</h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-500">

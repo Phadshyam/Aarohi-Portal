@@ -53,10 +53,10 @@ export default function AdminLayout() {
 
   // NEW: Branding (icon + wordmark)
   const [branding, setBranding] = useState({
-    business_name: '',
+    business_name: 'Aarohi Multiservices',
     logo_icon_url: '',
     logo_wordmark_url: '',
-  })
+  });
   const [iconFailed, setIconFailed] = useState(false)
   const [wordmarkFailed, setWordmarkFailed] = useState(false)
 
@@ -156,12 +156,28 @@ export default function AdminLayout() {
           key={iconSrc}
           src={iconSrc}
           alt="Logo"
-          className={compact ? 'h-9 w-9 object-contain scale-[1.25] drop-shadow-sm' : 'h-10 w-10 object-contain scale-[1.25] drop-shadow-sm'}
+          className={
+            compact
+              ? 'h-9 w-auto max-w-[200px] object-contain'
+              : 'h-9 w-auto max-w-[240px] object-contain'
+          }
           onError={() => setIconFailed(true)}
         />
       ) : (
-        <div className={compact ? 'flex h-9 w-9 items-center justify-center' : 'flex h-10 w-10 items-center justify-center'}>
-          <span className={compact ? 'text-sm font-extrabold text-white' : 'text-sm font-extrabold text-[#1e3a5f]'}>
+        <div
+          className={
+            compact
+              ? 'flex h-9 w-9 items-center justify-center rounded-full bg-white/10'
+              : 'flex h-10 w-10 items-center justify-center rounded-full bg-[#1e3a5f]/10'
+          }
+        >
+          <span
+            className={
+              compact
+                ? 'text-sm font-extrabold text-white'
+                : 'text-sm font-extrabold text-[#1e3a5f]'
+            }
+          >
             A
           </span>
         </div>
@@ -246,7 +262,7 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-gray-50">
       {/* HEADER */}
       <header className="fixed inset-x-0 top-0 z-40 h-16 bg-white shadow-sm">
-        <div className="flex h-full items-center justify-between px-4 sm:px-6">
+        <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Left */}
           <div className="flex items-center gap-3">
             <button
@@ -382,7 +398,13 @@ export default function AdminLayout() {
             ].join(' ')}
           >
             <div className="flex h-16 items-center justify-between px-4">
-              <BrandBlock compact />
+              <button
+                type="button"
+                onClick={() => navigate('/admin/dashboard')}
+                className="flex items-center"
+              >
+                <BrandBlock compact />
+              </button>
               <button
                 type="button"
                 className="inline-flex items-center justify-center rounded-lg p-2 text-white/90 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
