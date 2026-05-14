@@ -149,7 +149,7 @@ export default function ApplicationDetailModal({ open, application, onClose, onS
 
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/45" />
+      <div className="absolute inset-0 bg-slate-900/55 backdrop-blur-sm bg-opacity-50" />
 
       <div className="absolute inset-0 flex items-start justify-center overflow-y-auto p-4 sm:p-6">
         <div

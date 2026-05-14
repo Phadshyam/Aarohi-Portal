@@ -18,33 +18,33 @@ const DARK_WORDMARK =
     `${SUPABASE_URL}/storage/v1/object/public/branding/logo-wordmark-dark.png`
 
 export default function BrandLogo({
+    
     dark = false,
     clickable = true,
-}) {
+    lightIcon,
+    darkIcon,
+    lightWordmark,
+    darkWordmark,
+  }) {
     const navigate = useNavigate()
-
-    const iconSrc = dark ? DARK_ICON : LIGHT_ICON
-    const wordmarkSrc = dark ? DARK_WORDMARK : LIGHT_WORDMARK
-
-    const Wrapper = clickable ? 'button' : 'div'
-
+  
+    const iconSrc = (dark ? darkIcon : lightIcon) || null
+    const wordmarkSrc = (dark ? darkWordmark : lightWordmark) || null
+  
+    const Wrapper = 'div'
+  
     return (
-        <Wrapper
-            type={clickable ? 'button' : undefined}
-            onClick={clickable ? () => navigate('/') : undefined}
-            className="flex items-center gap-3 focus:outline-none"
-        >
-            <img
-                src={iconSrc}
-                alt="Logo"
-                className="h-11 w-11 object-contain scale-[1.2]"
-            />
+      <div
+        onClick={clickable ? () => navigate('/') : undefined}
+        className="flex items-center gap-3 cursor-pointer"
+      >
+        {iconSrc && (
+          <img src={iconSrc} className="h-11 w-11 object-contain" alt="logo icon" />
+        )}
 
-            <img
-                src={wordmarkSrc}
-                alt="Aarohi Multiservices"
-                className="h-9 w-auto object-contain"
-            />
-        </Wrapper>
+        {wordmarkSrc && (
+          <img src={wordmarkSrc} className="h-9 w-auto object-contain" alt="logo text" />
+        )}
+      </div>
     )
-}
+  }

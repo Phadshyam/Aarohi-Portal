@@ -133,7 +133,9 @@ export function AuthProvider({ children }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      if (isDev) console.log('onAuthStateChange:', event)
+      if (isDev) if (import.meta.env.DEV) {
+        console.log('onAuthStateChange:', event)
+      }
 
       setSession(nextSession)
       setUser(nextSession?.user || null)

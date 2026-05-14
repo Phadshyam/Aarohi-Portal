@@ -20,8 +20,9 @@ import {
 import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
+import BrandLogo from '../common/BrandLogo'
 
-const SIDEBAR_WIDTH_CLASS = 'w-64' // ~250px
+const SIDEBAR_WIDTH_CLASS = 'w-56' 
 
 const ALL_NAV_ITEMS = [
   { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
@@ -46,6 +47,8 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { admin, logout } = useAuth()
 
+  const isDarkSidebar = true
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -56,7 +59,9 @@ export default function AdminLayout() {
     business_name: 'Aarohi Multiservices',
     logo_icon_url: '',
     logo_wordmark_url: '',
-  });
+    logo_icon_dark_url: '',
+    logo_wordmark_dark_url: '',
+  })
   const [iconFailed, setIconFailed] = useState(false)
   const [wordmarkFailed, setWordmarkFailed] = useState(false)
 
@@ -73,6 +78,18 @@ export default function AdminLayout() {
     return ALL_NAV_ITEMS.filter((item) => (item.adminOnly ? isAdmin : true))
   }, [admin?.role])
 
+  const [isMobile, setIsMobile] = useState(false)
+
+useEffect(() => {
+  const mq = window.matchMedia('(max-width: 768px)')
+  const update = () => setIsMobile(mq.matches)
+
+  update()
+  mq.addEventListener?.('change', update)
+
+  return () => mq.removeEventListener?.('change', update)
+}, [])
+
   // Fetch branding for admin portal header/sidebar
   useEffect(() => {
     const fetchBranding = async () => {
@@ -85,6 +102,8 @@ export default function AdminLayout() {
           business_name: data?.business_name || '',
           logo_icon_url: data?.logo_icon_url || '',
           logo_wordmark_url: data?.logo_wordmark_url || '',
+          logo_icon_dark_url: data?.logo_icon_dark_url || '',
+          logo_wordmark_dark_url: data?.logo_wordmark_dark_url || '',
         })
       } catch (e) {
         console.error('Admin branding fetch error:', e)
@@ -92,13 +111,16 @@ export default function AdminLayout() {
     }
     fetchBranding()
   }, [])
+  
+  const wordmarkSrc = (
+    isMobile
+      ? branding.logo_wordmark_dark_url
+      : branding.logo_wordmark_url
+  ) || ''
 
-  const iconSrc = (branding.logo_icon_url || '/logo.png').trim()
-  const wordmarkSrc = (branding.logo_wordmark_url || '').trim()
+  const fallbackIcon = isMobile ? '/logo-dark.png' : '/logo.png'
 
   // Reset fail flags if URLs change
-  useEffect(() => setIconFailed(false), [iconSrc])
-  useEffect(() => setWordmarkFailed(false), [wordmarkSrc])
 
   // Close dropdown on outside click / Esc
   useEffect(() => {
@@ -152,17 +174,12 @@ export default function AdminLayout() {
     <div className="flex items-center gap-3">
       {/* Icon (no box) */}
       {!iconFailed ? (
-        <img
-          key={iconSrc}
-          src={iconSrc}
-          alt="Logo"
-          className={
-            compact
-              ? 'h-9 w-auto max-w-[200px] object-contain'
-              : 'h-9 w-auto max-w-[240px] object-contain'
-          }
-          onError={() => setIconFailed(true)}
-        />
+        <BrandLogo
+        lightIcon={branding.logo_icon_url}
+        darkIcon={branding.logo_icon_dark_url}
+        lightWordmark={branding.logo_wordmark_url}
+        darkWordmark={branding.logo_wordmark_dark_url}
+      />
       ) : (
         <div
           className={
@@ -185,9 +202,12 @@ export default function AdminLayout() {
 
       {/* Wordmark: show on sm+ in header; always show in mobile sidebar */}
       {wordmarkSrc && !wordmarkFailed ? (
-        <img
-          key={wordmarkSrc}
-          src={wordmarkSrc}
+        <BrandLogo
+          dark={true}
+          lightIcon={branding.logo_icon_url}
+          darkIcon={branding.logo_icon_dark_url}
+          lightWordmark={branding.logo_wordmark_url}
+          darkWordmark={branding.logo_wordmark_dark_url}
           alt={branding.business_name || 'Aarohi Multiservices'}
           className={compact ? 'h-9 w-auto max-w-[200px] object-contain' : 'hidden h-9 w-auto max-w-[240px] object-contain sm:block'}
           onError={() => setWordmarkFailed(true)}
@@ -207,8 +227,8 @@ export default function AdminLayout() {
 
   const SidebarNav = ({ onNavigate }) => (
     <div className="flex h-full flex-col">
-      <div className="px-4 pt-5">
-        <nav className="mt-4 space-y-1">
+      <div className="px-3 pt-4">
+        <nav className="mt-2 space-y-0.5">
           {visibleNavItems.map((item) => {
             const Icon = item.icon
             return (
@@ -218,9 +238,9 @@ export default function AdminLayout() {
                 onClick={onNavigate}
                 className={({ isActive }) =>
                   [
-                    'group flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] font-medium transition',
-                    'text-white/90 hover:bg-white/10 hover:text-white',
-                    isActive ? 'bg-white/15 text-white' : '',
+                    'group flex items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-medium transition-all duration-200',
+                    'text-white/85 hover:bg-white/10 hover:text-white',
+                    isActive ? 'bg-white/12 text-white shadow-[inset_3px_0_0_0_rgba(251,191,36,0.95)]' : '',
                   ].join(' ')
                 }
               >
@@ -228,13 +248,13 @@ export default function AdminLayout() {
                   <>
                     <span
                       className={[
-                        'h-6 w-1 rounded-full',
-                        isActive ? 'bg-white' : 'bg-transparent group-hover:bg-white/40',
+                        'h-5 w-0.5 shrink-0 rounded-full transition-all duration-200',
+                        isActive ? 'bg-amber-400' : 'bg-transparent group-hover:bg-white/35',
                       ].join(' ')}
                       aria-hidden="true"
                     />
-                    <Icon className="h-5 w-5 text-white" />
-                    <span>{item.label}</span>
+                    <Icon className="h-[18px] w-[18px] shrink-0 text-white/90" />
+                    <span className="truncate">{item.label}</span>
                   </>
                 )}
               </NavLink>
@@ -243,26 +263,26 @@ export default function AdminLayout() {
         </nav>
       </div>
 
-      <div className="mt-auto px-4 pb-5">
+      <div className="mt-auto px-3 pb-4 pt-2">
         <div className="h-px bg-white/10" />
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-3 flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-[15px] font-medium text-white/90 transition hover:bg-white/10 hover:text-white"
+          className="mt-3 flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-medium text-white/85 transition-all duration-200 hover:bg-white/10 hover:text-white"
         >
-          <span className="h-6 w-1 rounded-full bg-transparent" aria-hidden="true" />
-          <LogOut className="h-5 w-5" />
-          Logout
+          <span className="h-5 w-0.5 shrink-0 rounded-full bg-transparent" aria-hidden="true" />
+          <LogOut className="h-[18px] w-[18px] shrink-0" />
+          <span>Logout</span>
         </button>
       </div>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* HEADER */}
-      <header className="fixed inset-x-0 top-0 z-40 h-16 bg-white shadow-sm">
-        <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-200/80 bg-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-sm">
+        <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           {/* Left */}
           <div className="flex items-center gap-3">
             <button
@@ -283,14 +303,14 @@ export default function AdminLayout() {
               <BrandBlock />
             </button>
 
-            <form onSubmit={handleSubmitSearch} className="ml-2 hidden lg:block">
+            <form onSubmit={handleSubmitSearch} className="ml-2 hidden min-w-0 flex-1 lg:block lg:max-w-xl xl:max-w-2xl">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by Name, Phone or Application ID..."
-                  className="h-10 w-[520px] rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                  className="h-10 w-full rounded-lg border border-slate-200/90 bg-slate-50/90 pl-9 pr-3 text-sm font-normal text-slate-800 shadow-inner transition-all duration-200 placeholder:text-slate-400 focus:border-[#1e3a5f] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
                 />
               </div>
             </form>
@@ -300,7 +320,7 @@ export default function AdminLayout() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-transparent text-slate-600 transition-all duration-200 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
@@ -310,22 +330,22 @@ export default function AdminLayout() {
               <button
                 type="button"
                 onClick={() => setProfileOpen((v) => !v)}
-                className="inline-flex h-10 items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-transparent transition-all duration-200 hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
                 aria-label="Open profile menu"
                 aria-expanded={profileOpen}
               >
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#1e3a5f]/30 bg-white text-sm font-extrabold text-[#1e3a5f]">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-gradient-to-br from-white to-slate-50 text-sm font-semibold text-[#1e3a5f] shadow-sm">
                   {initials}
                 </span>
               </button>
 
               {profileOpen ? (
-                <div className="absolute right-0 mt-2 w-72 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                <div className="absolute right-0 mt-2 w-72 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.12)]">
                   <div className="px-4 py-3">
                     <p className="text-sm font-semibold text-slate-900">
                       Hey, {admin?.name || 'Admin'}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">{admin?.email || ''}</p>
+                    <p className="mt-0.5 text-xs font-normal text-slate-500">{admin?.email || ''}</p>
                   </div>
 
                   <div className="h-px bg-slate-100" />
@@ -336,16 +356,16 @@ export default function AdminLayout() {
                       setProfileOpen(false)
                       navigate('/admin/settings')
                     }}
-                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50 focus:outline-none focus-visible:bg-slate-50"
                   >
-                    <UserCog className="h-4 w-4 text-slate-600" />
+                    <UserCog className="h-4 w-4 text-slate-500" />
                     Profile Settings
                   </button>
 
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-red-600 transition-colors duration-200 hover:bg-red-50 focus:outline-none focus-visible:bg-red-50"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout
@@ -365,7 +385,7 @@ export default function AdminLayout() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by Name, Phone or Application ID..."
-                className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                className="h-10 w-full rounded-lg border border-slate-200/90 bg-slate-50/90 pl-9 pr-3 text-sm font-normal text-slate-800 shadow-inner transition-all duration-200 placeholder:text-slate-400 focus:border-[#1e3a5f] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
               />
             </div>
           </form>
@@ -397,14 +417,7 @@ export default function AdminLayout() {
               SIDEBAR_WIDTH_CLASS,
             ].join(' ')}
           >
-            <div className="flex h-16 items-center justify-between px-4">
-              <button
-                type="button"
-                onClick={() => navigate('/admin/dashboard')}
-                className="flex items-center"
-              >
-                <BrandBlock compact />
-              </button>
+            <div className="flex h-16 items-center justify-end px-4">
               <button
                 type="button"
                 className="inline-flex items-center justify-center rounded-lg p-2 text-white/90 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
@@ -423,8 +436,8 @@ export default function AdminLayout() {
       ) : null}
 
       {/* CONTENT */}
-      <main className={['min-h-screen bg-gray-50', 'pt-[7.75rem] lg:pt-16', 'md:pl-64'].join(' ')}>
-        <div className="px-4 py-6 sm:px-6 lg:px-8">
+      <main className={['min-h-screen bg-slate-50', 'pt-[7.75rem] lg:pt-16', 'md:pl-56'].join(' ')}>
+        <div className="px-4 py-8 sm:px-6 lg:px-8">
           <Outlet />
         </div>
       </main>

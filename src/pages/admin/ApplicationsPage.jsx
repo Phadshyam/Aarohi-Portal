@@ -5,8 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   CalendarDays,
-  ChevronDown,
-  Loader2,
+  FileText,
   Plus,
   Search,
   X,
@@ -14,7 +13,6 @@ import {
 
 import { supabase } from '../../lib/supabase'
 import Badge from '../../components/ui/Badge'
-import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import { formatCurrency, formatDate } from '../../utils/helpers'
 
 const PAGE_SIZE = 10
@@ -50,7 +48,7 @@ function TogglePayment({ value, onChange }) {
   const isPaid = value === 'Paid'
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm font-semibold text-slate-600">Pending</span>
+      <span className="text-sm font-medium text-slate-600">Pending</span>
       <button
         type="button"
         onClick={() => onChange(isPaid ? 'Pending' : 'Paid')}
@@ -67,7 +65,7 @@ function TogglePayment({ value, onChange }) {
           ].join(' ')}
         />
       </button>
-      <span className="text-sm font-bold text-emerald-600">Paid</span>
+      <span className="text-sm font-medium text-emerald-600">Paid</span>
     </div>
   )
 }
@@ -89,31 +87,31 @@ function DateRangePopover({ open, onClose, startDate, endDate, setStartDate, set
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-[calc(100%+8px)] z-20 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-lg"
+      className="absolute right-0 top-[calc(100%+8px)] z-20 w-72 rounded-xl border border-slate-200/90 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)]"
     >
-      <p className="text-sm font-extrabold text-slate-900">Select Date Range</p>
+      <p className="text-sm font-semibold text-slate-900">Select date range</p>
 
       <div className="mt-3 space-y-3">
         <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-slate-600">
             From
           </label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+            className="h-10 w-full rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-normal text-slate-700 transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-slate-600">
             To
           </label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+            className="h-10 w-full rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-normal text-slate-700 transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
           />
         </div>
 
@@ -262,111 +260,110 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header row */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-3xl font-extrabold text-slate-900">Applications</h1>
+    <div className="space-y-10">
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Applications</h1>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value)
-              setPage(1)
-            }}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-          >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)] sm:p-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setPage(1)
+              }}
+              className="h-10 min-w-[140px] rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
 
-          <select
-            value={serviceFilter}
-            onChange={(e) => {
-              setServiceFilter(e.target.value)
-              setPage(1)
-            }}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-          >
-            <option value="all">All Services</option>
-            {services.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
+            <select
+              value={serviceFilter}
+              onChange={(e) => {
+                setServiceFilter(e.target.value)
+                setPage(1)
+              }}
+              className="h-10 min-w-[160px] rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+            >
+              <option value="all">All Services</option>
+              {services.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
 
-          <div className="relative">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setDateOpen((v) => !v)}
+                className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              >
+                <CalendarDays className="h-4 w-4 text-slate-500" />
+                Date range
+              </button>
+
+              <DateRangePopover
+                open={dateOpen}
+                onClose={() => setDateOpen(false)}
+                startDate={startDate}
+                endDate={endDate}
+                setStartDate={(v) => {
+                  setStartDate(v)
+                  setPage(1)
+                }}
+                setEndDate={(v) => {
+                  setEndDate(v)
+                  setPage(1)
+                }}
+              />
+            </div>
+
             <button
               type="button"
-              onClick={() => setDateOpen((v) => !v)}
-              className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              onClick={() => navigate('/admin/add')}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#1e3a5f] px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#16304f] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25"
             >
-              <CalendarDays className="h-4 w-4 text-slate-500" />
-              Select Date
+              <Plus className="h-4 w-4" />
+              Add application
             </button>
-
-            <DateRangePopover
-              open={dateOpen}
-              onClose={() => setDateOpen(false)}
-              startDate={startDate}
-              endDate={endDate}
-              setStartDate={(v) => {
-                setStartDate(v)
-                setPage(1)
-              }}
-              setEndDate={(v) => {
-                setEndDate(v)
-                setPage(1)
-              }}
-            />
           </div>
 
-          <button
-            type="button"
-            onClick={() => navigate('/admin/add')}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#1e3a5f] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#16304f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25"
-          >
-            <Plus className="h-4 w-4" />
-            Add Application
-          </button>
+          <div className="relative w-full min-w-0 xl:max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search by name, phone, or application ID…"
+              className="h-10 w-full rounded-lg border border-slate-200/90 bg-slate-50/80 pl-9 pr-3 text-sm font-normal text-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 placeholder:text-slate-400 focus:border-[#1e3a5f] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Top bar: Search */}
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search by Name, Phone or Application ID..."
-          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-        />
-      </div>
-
-      {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(2,6,23,0.12)]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
         <div className="overflow-x-auto">
           <table className="min-w-[1080px] w-full">
-            <thead>
-              <tr className="bg-white">
+            <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm">
+              <tr>
                 {[
                   'Application ID',
                   'Name',
                   'Phone',
                   'Service',
                   'Cost',
-                  'Created Date',
-                  'Payment Status',
-                  'Application Status',
+                  'Created date',
+                  'Payment status',
+                  'Application status',
                   'Actions',
                 ].map((h) => (
                   <th
                     key={h}
-                    className="px-5 py-4 text-left text-sm font-extrabold text-slate-500"
+                    className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
                   >
                     {h}
                   </th>
@@ -376,53 +373,84 @@ export default function ApplicationsPage() {
 
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr>
-                  <td colSpan={9} className="px-5 py-12">
-                    <div className="flex justify-center">
-                      <LoadingSpinner label="Loading applications..." />
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse bg-white">
+                    {Array.from({ length: 9 }).map((__, j) => (
+                      <td key={j} className="px-5 py-3.5">
+                        <div className="h-3.5 w-full max-w-[120px] rounded bg-slate-100" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : apps.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12">
-                    <div className="text-center text-sm font-semibold text-slate-500">
-                      No applications found.
+                  <td colSpan={9} className="px-5 py-14">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-400">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-slate-800">No applications match</p>
+                      <p className="mt-1 max-w-sm text-sm font-normal text-slate-500">
+                        Try different filters or add a new application.
+                      </p>
+                      <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => navigate('/admin/add')}
+                          className="inline-flex h-10 items-center rounded-lg bg-[#1e3a5f] px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#16304f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25"
+                        >
+                          Add application
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchInput('')
+                            setStatusFilter('all')
+                            setServiceFilter('all')
+                            setStartDate('')
+                            setEndDate('')
+                            setPage(1)
+                          }}
+                          className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                        >
+                          Reset filters
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
               ) : (
                 apps.map((app) => (
-                  <tr key={app.id} className="bg-white">
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                  <tr key={app.id} className="bg-white transition-colors duration-200 hover:bg-slate-50/80">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {app.application_id}
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {app.name}
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {app.phone}
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {app.service_name}
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {getApplicationCostDisplay(app)}
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {formatDate(app.created_at)}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3.5">
                       <Badge status={app.payment_status}>{app.payment_status}</Badge>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3.5">
                       <Badge status={app.status}>{app.status}</Badge>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3.5">
                       <button
                         type="button"
                         onClick={() => openModal(app)}
-                        className="rounded-full bg-blue-100 px-5 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-200"
+                        className="inline-flex min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[#1e3a5f] shadow-sm transition-all duration-200 hover:border-[#1e3a5f]/25 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
                       >
                         View
                       </button>
@@ -434,18 +462,17 @@ export default function ApplicationsPage() {
           </table>
         </div>
 
-        {/* Footer: total + pagination */}
         <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm font-semibold text-slate-500">
-            Total: <span className="font-extrabold text-slate-700">{count}</span>
+          <div className="text-sm font-medium text-slate-500">
+            Total: <span className="font-semibold text-slate-800">{count}</span>
           </div>
 
-          <div className="flex items-center justify-end gap-2 text-sm font-semibold text-[#1e3a5f]">
+          <div className="flex flex-wrap items-center justify-end gap-2 text-sm font-medium text-[#1e3a5f]">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1 || loading}
-              className="px-2 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg px-3 py-1.5 transition-colors duration-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 disabled:cursor-not-allowed disabled:opacity-40"
             >
               &lt; Prev
             </button>
@@ -463,8 +490,8 @@ export default function ApplicationsPage() {
                     onClick={() => setPage(p)}
                     disabled={loading}
                     className={[
-                      'h-8 w-8 rounded-md',
-                      p === page ? 'bg-[#1e3a5f] text-white' : 'hover:bg-slate-100',
+                      'h-8 min-w-[2rem] rounded-lg px-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20',
+                      p === page ? 'bg-[#1e3a5f] text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100',
                     ].join(' ')}
                   >
                     {p}
@@ -477,7 +504,7 @@ export default function ApplicationsPage() {
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages || loading}
-              className="px-2 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg px-3 py-1.5 transition-colors duration-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next &gt;
             </button>
@@ -485,13 +512,12 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-    <ApplicationDetailModal
-      open={modalOpen}
-      application={selected}
-      onClose={closeModal}
-      onSaved={fetchApplications}
-    />
-
+      <ApplicationDetailModal
+        open={modalOpen}
+        application={selected}
+        onClose={closeModal}
+        onSaved={fetchApplications}
+      />
     </div>
   )
 }

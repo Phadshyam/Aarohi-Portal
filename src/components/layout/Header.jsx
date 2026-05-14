@@ -14,6 +14,35 @@ export default function Header() {
   const navigate = useNavigate()
   const location = useLocation()
 
+  const [branding, setBranding] = useState({
+    business_name: '',
+    logo_icon_url: '',
+    logo_wordmark_url: '',
+    logo_icon_dark_url: '',
+    logo_wordmark_dark_url: '',
+  })
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_public_branding')
+        if (error) throw error
+  
+        setBranding({
+          business_name: data?.business_name || '',
+          logo_icon_url: data?.logo_icon_url || '',
+          logo_wordmark_url: data?.logo_wordmark_url || '',
+          logo_icon_dark_url: data?.logo_icon_dark_url || '',
+          logo_wordmark_dark_url: data?.logo_wordmark_dark_url || '',
+        })
+      } catch (e) {
+        console.error('Header branding error:', e)
+      }
+    }
+  
+    fetchBranding()
+  }, [])
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false)
   const [desktopServicesOpen, setDesktopServicesOpen] = useState(false)
@@ -170,18 +199,18 @@ export default function Header() {
   }
 
   const navLinkClass =
-    'inline-flex h-9 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-slate-700 transition-colors duration-200 ease-out hover:bg-slate-50 hover:text-[#1e3a5f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a5f]/25 focus-visible:ring-offset-2'
+    'inline-flex h-9 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-slate-700 transition-colors duration-300 ease-out hover:bg-slate-50 hover:text-[#1e3a5f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a5f]/25 focus-visible:ring-offset-2'
 
   const ctaOutlineClass =
-    'inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a5f]/20 sm:px-4'
+    'inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-slate-200/90 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition-all duration-300 ease-out hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_6px_16px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a5f]/20 sm:px-4'
 
   const ctaPrimaryClass =
-    'inline-flex h-9 shrink-0 items-center justify-center rounded-lg px-3.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a5f]/30 focus-visible:ring-offset-2 sm:px-4'
+    'inline-flex h-9 shrink-0 items-center justify-center rounded-lg px-3.5 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(30,58,95,0.28)] transition-all duration-300 ease-out hover:shadow-[0_6px_18px_rgba(30,58,95,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a5f]/30 focus-visible:ring-offset-2 sm:px-4'
 
   const desktopServicesPanel = (
     <div
       className={[
-        'absolute left-0 top-full z-[100] mt-2 min-w-[280px] max-w-sm overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.12)] transition-[opacity,transform,visibility] duration-200 ease-out',
+        'absolute left-0 top-full z-[100] mt-2 min-w-[280px] max-w-sm overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-[0_20px_50px_rgba(15,23,42,0.14)] backdrop-blur-sm transition-[opacity,transform,visibility] duration-300 ease-out',
         desktopServicesOpen
           ? 'pointer-events-auto visible translate-y-0 opacity-100'
           : 'pointer-events-none invisible -translate-y-1 opacity-0',
@@ -214,7 +243,7 @@ export default function Header() {
               type="button"
               role="menuitem"
               onClick={() => goToHomeService(s.id)}
-              className="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors duration-150 ease-out hover:bg-slate-50 hover:text-[#1e3a5f]"
+              className="mx-1 flex w-[calc(100%-0.5rem)] items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors duration-200 ease-out hover:bg-slate-50 hover:text-[#1e3a5f]"
             >
               <span className="line-clamp-2">{s.name}</span>
             </button>
@@ -225,7 +254,7 @@ export default function Header() {
   )
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200/90 bg-[#ffffff] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-[#ffffff]/95 shadow-[0_1px_0_rgba(15,23,42,0.05)] backdrop-blur-sm supports-[backdrop-filter]:bg-[#ffffff]/90">
       <div
         ref={mobileMenuRef}
         className="relative mx-auto w-full max-w-7xl overflow-x-clip px-4 sm:px-6 lg:px-8"
@@ -238,7 +267,12 @@ export default function Header() {
               className="flex max-h-14 items-center justify-center rounded-lg py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a5f]/25 focus-visible:ring-offset-2"
               aria-label="Go to home"
             >
-              <BrandLogo clickable={false} />
+              <BrandLogo
+                lightIcon={branding.logo_icon_url}
+                darkIcon={branding.logo_icon_dark_url}
+                lightWordmark={branding.logo_wordmark_url}
+                darkWordmark={branding.logo_wordmark_dark_url}
+              />
             </button>
           </div>
 
@@ -331,7 +365,7 @@ export default function Header() {
               : 'invisible max-h-0 overflow-hidden border-b-0 opacity-0 pointer-events-none shadow-none',
             'transition-[max-height,opacity,visibility] duration-300 ease-out',
           ].join(' ')}
-          aria-hidden={!mobileMenuOpen}
+          inert={!mobileMenuOpen}
         >
           <div className="space-y-0.5 py-3">
               <button
@@ -418,6 +452,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => {
+                  document.activeElement?.blur?.()
                   setMobileMenuOpen(false)
                   navigate('/track')
                 }}

@@ -14,7 +14,7 @@ export default function Badge({
   return (
     <span
       className={[
-        'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold',
+        'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
         computedColor || 'bg-slate-100 text-slate-700 border border-slate-200',
         className,
       ].join(' ')}

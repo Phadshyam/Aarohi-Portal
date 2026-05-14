@@ -1,5 +1,6 @@
 // src/App.jsx
 import React, { Suspense } from 'react'
+import { Toaster } from 'react-hot-toast'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 
 const modules = import.meta.glob('./**/*.jsx')
@@ -128,6 +129,7 @@ function PublicLayout() {
 
 export default function App() {
   return (
+    <>
     <Suspense fallback={<AppLoading />}>
       <Routes>
         {/* PUBLIC */}
@@ -190,5 +192,15 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        duration: 4000,
+        className:
+          '!rounded-xl !border !border-slate-200/90 !bg-white !px-4 !py-3 !text-sm !font-medium !text-slate-800 !shadow-[0_10px_40px_rgba(15,23,42,0.12)]',
+        style: { fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' },
+      }}
+    />
+    </>
   )
 }

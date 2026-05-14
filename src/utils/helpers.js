@@ -29,7 +29,7 @@ export function getStatusColor(status) {
   switch (s) {
     // Application statuses
     case 'submitted':
-      return 'bg-slate-100 text-slate-700 border border-slate-200'
+      return 'bg-amber-50 text-amber-900 border border-amber-200'
     case 'in process':
       return 'bg-blue-100 text-blue-700 border border-blue-200'
     case 'on hold':
@@ -43,7 +43,7 @@ export function getStatusColor(status) {
     case 'paid':
       return 'bg-emerald-100 text-emerald-800 border border-emerald-200'
     case 'pending':
-      return 'bg-slate-100 text-slate-700 border border-slate-200'
+      return 'bg-amber-50 text-amber-900 border border-amber-200'
 
     // Source
     case 'online':

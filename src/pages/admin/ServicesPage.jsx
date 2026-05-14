@@ -1,7 +1,7 @@
 // src/pages/admin/ServicesPage.jsx
 import React, { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Search, X, Plus } from 'lucide-react'
+import { Search, X, Plus, Package } from 'lucide-react'
 
 import { supabase } from '../../lib/supabase'
 import { formatCurrency } from '../../utils/helpers'
@@ -20,7 +20,7 @@ function Toggle({ checked, disabled, onChange }) {
       disabled={disabled}
       onClick={onChange}
       className={[
-        'relative inline-flex h-6 w-12 items-center rounded-full transition',
+        'relative inline-flex h-6 w-12 items-center rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25 focus:ring-offset-2',
         checked ? 'bg-emerald-500' : 'bg-slate-300',
         disabled ? 'cursor-not-allowed opacity-60' : '',
       ].join(' ')}
@@ -103,10 +103,10 @@ function ModalShell({ open, title, onClose, children, footer, maxWidthClass = 'm
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center overflow-y-auto py-4"
+      className="fixed inset-0 bg-slate-900/55 backdrop-blur-sm bg-opacity-50 z-50 flex items-start justify-center overflow-y-auto py-4"
       onClick={onClose}
     >
-      <div
+      <div  
         className={[
           'bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 my-auto max-h-[90vh] flex flex-col',
           maxWidthClass,
@@ -864,18 +864,17 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-extrabold text-slate-900">Services Management</h1>
+    <div className="space-y-10">
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Services management</h1>
 
-      {/* Top bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full max-w-xl">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)] sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="relative w-full min-w-0 sm:max-w-md">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search services..."
-            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+            placeholder="Search services…"
+            className="h-10 w-full rounded-lg border border-slate-200/90 bg-slate-50/80 pl-9 pr-3 text-sm font-normal text-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 placeholder:text-slate-400 focus:border-[#1e3a5f] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
           />
         </div>
 
@@ -883,97 +882,139 @@ export default function ServicesPage() {
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-[#1e3a5f] px-8 text-sm font-semibold text-white shadow-sm hover:bg-[#16304f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25"
+            className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#1e3a5f] px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#16304f] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25"
           >
-            + Add Service
+            + Add service
           </button>
         ) : null}
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(2,6,23,0.12)]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
         <div className="overflow-x-auto">
           <table className="min-w-[980px] w-full">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm">
               <tr>
-                {['Status', 'Service Name', 'Cost', 'Status', 'Actions'].map((h, idx) => (
-                  <th
-                    key={`${h}-${idx}`}
-                    className="px-6 py-5 text-left text-lg font-extrabold text-slate-600"
-                  >
-                    {h}
-                  </th>
-                ))}
+                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  #
+                </th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Service
+                </th>
+                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Cost
+                </th>
+                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Active
+                </th>
+                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Actions
+                </th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-16">
-                    <div className="flex justify-center">
-                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500">
-                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-[#1e3a5f]" />
-                        Loading services...
-                      </div>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse bg-white">
+                    {Array.from({ length: 5 }).map((__, j) => (
+                      <td key={j} className="px-5 py-4">
+                        <div className="mx-auto h-3.5 max-w-[100px] rounded bg-slate-100" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-16">
-                    <div className="text-center text-sm font-semibold text-slate-500">
-                      No services found.
+                  <td colSpan={5} className="px-5 py-14">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-400">
+                        <Package className="h-6 w-6" />
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-slate-800">No services found</p>
+                      <p className="mt-1 max-w-sm text-sm font-normal text-slate-500">
+                        {search.trim()
+                          ? 'Try a different search term.'
+                          : 'Services you add will appear in this table.'}
+                      </p>
+                      {search.trim() ? (
+                        <button
+                          type="button"
+                          onClick={() => setSearch('')}
+                          className="mt-5 inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                        >
+                          Clear search
+                        </button>
+                      ) : isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={() => setAddOpen(true)}
+                          className="mt-5 inline-flex h-10 items-center rounded-lg bg-[#1e3a5f] px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#16304f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25"
+                        >
+                          Add service
+                        </button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
               ) : (
-                filtered.map((s, idx) => (
-                  <tr key={s.id}>
-                    <td className="px-6 py-5 text-center text-lg font-extrabold text-slate-900">
-                      {idx + 1}.
-                    </td>
+                filtered.map((s, idx) => {
+                  const RowIcon = iconKeyToIcon(s.icon_key)
+                  return (
+                    <tr
+                      key={s.id}
+                      className="bg-white transition-colors duration-200 hover:bg-slate-50/80"
+                    >
+                      <td className="px-5 py-4 text-center text-sm font-medium tabular-nums text-slate-500">
+                        {idx + 1}
+                      </td>
 
-                    {/* ✅ LEFT ALIGNED SERVICE NAME */}
-                    <td className="px-6 py-5 text-left text-lg font-extrabold text-slate-900">
-                      {s.name}
-                    </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 ring-1 ring-slate-200/80">
+                            <RowIcon className="h-4 w-4 text-[#1e3a5f]" aria-hidden />
+                          </div>
+                          <span className="text-sm font-medium text-slate-900">{s.name}</span>
+                        </div>
+                      </td>
 
-                    <td className="px-6 py-5 text-center text-lg font-extrabold text-slate-900">
-                      {getCostDisplay(s)}
-                    </td>
+                      <td className="px-5 py-4 text-center text-sm font-normal text-slate-700">
+                        {getCostDisplay(s)}
+                      </td>
 
-                    <td className="px-6 py-5 text-center">
-                      <Toggle
-                        checked={Boolean(s.is_active)}
-                        disabled={!isAdmin || togglingId === s.id}
-                        onChange={() => handleToggle(s)}
-                      />
-                    </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-center">
+                          <Toggle
+                            checked={Boolean(s.is_active)}
+                            disabled={!isAdmin || togglingId === s.id}
+                            onChange={() => handleToggle(s)}
+                          />
+                        </div>
+                      </td>
 
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => openView(s)}
-                          className="rounded-lg bg-slate-100 px-5 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-200"
-                        >
-                          View
-                        </button>
-
-                        {isAdmin ? (
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap items-center justify-center gap-2">
                           <button
                             type="button"
-                            onClick={() => openEdit(s)}
-                            className="rounded-lg bg-[#1e3a5f] px-6 py-2 text-sm font-extrabold text-white hover:bg-[#16304f]"
+                            onClick={() => openView(s)}
+                            className="inline-flex min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[#1e3a5f] shadow-sm transition-all duration-200 hover:border-[#1e3a5f]/25 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
                           >
-                            Edit
+                            View
                           </button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+
+                          {isAdmin ? (
+                            <button
+                              type="button"
+                              onClick={() => openEdit(s)}
+                              className="inline-flex min-h-[36px] items-center rounded-lg bg-[#1e3a5f] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#16304f] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25"
+                            >
+                              Edit
+                            </button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

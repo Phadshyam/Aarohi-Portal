@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   Building2,
+  BuildingIcon,
   Car,
   Check,
   Copy,
@@ -51,23 +52,23 @@ const SERVICES = [
     name: 'Aadhaar Services',
     description: 'UIDAI services including Aadhaar update, download and verification.',
     category: 'identity',
-    url: 'https://uidai.gov.in/',
+    url: 'https://myaadhaar.uidai.gov.in/en_IN',
     icon: IdCard,
   },
   {
-    id: 'pan-nsdl',
-    name: 'PAN Card (NSDL)',
-    description: 'Apply / track PAN through NSDL official services.',
+    id: 'pan',
+    name: 'PAN Card',
+    description: 'Apply / track PAN through official portal.',
     category: 'identity',
-    url: 'https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html',
+    url: 'https://arthnitipan.in/',
     icon: CreditCard,
   },
   {
-    id: 'pan-uti',
-    name: 'PAN Card (UTI)',
-    description: 'Apply / track PAN through UTIITSL official portal.',
+    id: 'gazzate',
+    name: 'Gazzate',
+    description: 'Apply / track Gazzate through officical portal.',
     category: 'identity',
-    url: 'https://www.pan.utiitsl.com/',
+    url: 'https://aaplesarkar.mahaonline.gov.in/en',
     icon: CreditCard,
   },
   {
@@ -117,7 +118,7 @@ const SERVICES = [
     name: 'EPFO',
     description: 'Provident fund services including UAN, passbook and claims.',
     category: 'financial',
-    url: 'https://www.epfindia.gov.in/',
+    url: 'https://unifiedportal-mem.epfindia.gov.in/memberinterface/',
     icon: Building2,
   },
   {
@@ -225,21 +226,37 @@ const SERVICES = [
     icon: Factory,
   },
   {
-    id: 'mca',
-    name: 'MCA Portal',
-    description: 'Ministry of Corporate Affairs services and filings.',
+    id: 'shop-act',
+    name: 'Shop Act Registration',
+    description: 'Register your shop or business under the Shop Act legally.',
     category: 'business',
-    url: 'https://www.mca.gov.in/',
-    icon: Building2,
+    url: 'https://aaplesarkar.mahaonline.gov.in/en',
+    icon: BuildingIcon,
   },
   {
-    id: 'gem',
-    name: 'GeM Portal',
-    description: 'Government e-Marketplace for procurement and seller services.',
+    id: 'food',
+    name: 'Food License',
+    description: 'Food License service helps food businesses obtain FSSAI registration or license.',
     category: 'business',
-    url: 'https://gem.gov.in/',
-    icon: ShoppingBag,
+    url: 'https://foscos.fssai.gov.in/',
+    icon: BuildingIcon,
   },
+  // {
+  //   id: 'mca',
+  //   name: 'MCA Portal',
+  //   description: 'Ministry of Corporate Affairs services and filings.',
+  //   category: 'business',
+  //   url: 'https://www.mca.gov.in/',
+  //   icon: Building2,
+  // },
+  // {
+  //   id: 'gem',
+  //   name: 'GeM Portal',
+  //   description: 'Government e-Marketplace for procurement and seller services.',
+  //   category: 'business',
+  //   url: 'https://gem.gov.in/',
+  //   icon: ShoppingBag,
+  // },
 ]
 
 function safeJsonParse(value, fallback) {
@@ -285,23 +302,42 @@ function ServiceCard({
 }) {
   const Icon = service.icon || Globe
   const domain = getDomain(service.url)
+  const [faviconFailed, setFaviconFailed] = useState(false)
+
+  useEffect(() => {
+    setFaviconFailed(false)
+  }, [service.url])
+
+  const faviconSrc =
+    domain && !faviconFailed
+      ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`
+      : null
 
   return (
-    <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_35px_rgba(2,6,23,0.08)] transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_45px_rgba(2,6,23,0.12)]">
+    <div className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200">
-            <Icon className="h-5 w-5 text-[#1e3a5f]" />
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200/80">
+            {faviconSrc ? (
+              <img
+                src={faviconSrc}
+                alt=""
+                className="h-7 w-7 object-contain"
+                onError={() => setFaviconFailed(true)}
+              />
+            ) : (
+              <Icon className="h-5 w-5 text-[#1e3a5f]" />
+            )}
           </div>
 
-          <div>
-            <h3 className="text-base font-extrabold text-slate-900">{service.name}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-slate-500">
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold tracking-tight text-slate-900">{service.name}</h3>
+            <p className="mt-1 text-sm font-normal leading-relaxed text-slate-500">
               {service.description}
             </p>
 
             {domain ? (
-              <p className="mt-2 text-xs font-semibold text-slate-400">
+              <p className="mt-2 text-xs font-medium text-slate-400">
                 {domain}
               </p>
             ) : null}
@@ -311,7 +347,7 @@ function ServiceCard({
         <button
           type="button"
           onClick={onToggleFavorite}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-700 transition-all duration-200 hover:bg-slate-50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
           aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
@@ -329,11 +365,11 @@ function ServiceCard({
         </Badge>
 
         {openedCount > 0 ? (
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+          <span className="rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
             Opened {openedCount} {openedCount === 1 ? 'time' : 'times'}
           </span>
         ) : (
-          <span className="text-xs font-semibold text-slate-400">Opens in new tab</span>
+          <span className="text-xs font-medium text-slate-400">Opens in new tab</span>
         )}
       </div>
 
@@ -343,7 +379,7 @@ function ServiceCard({
           target="_blank"
           rel="noopener noreferrer"
           onClick={onOpen}
-          className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#1e3a5f] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#16304f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25 active:scale-[0.98]"
+          className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#1e3a5f] px-4 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#16304f] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25 active:scale-[0.99]"
         >
           Open Portal
           <ExternalLink className="h-4 w-4" />
@@ -353,10 +389,10 @@ function ServiceCard({
           type="button"
           onClick={onCopy}
           className={classNames(
-            'relative inline-flex h-10 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold shadow-sm transition active:scale-[0.98]',
+            'relative inline-flex h-10 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 active:scale-[0.99]',
             copied
               ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+              : 'border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 hover:shadow-sm'
           )}
         >
           {/* tooltip */}
@@ -514,29 +550,29 @@ export default function ServicePortalsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(2,6,23,0.08)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] sm:p-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-extrabold text-slate-900">Service Portals</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Service Portals</h1>
               <Badge color="bg-blue-50 text-blue-700 border border-blue-200">
                 Total: {totalCount}
               </Badge>
             </div>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
+            <p className="mt-2 max-w-2xl text-sm font-normal leading-relaxed text-slate-500">
               Quick access to official government service websites from one centralized dashboard.
               Open portals in a new tab to proceed with applications and verification.
             </p>
           </div>
 
-          <div className="w-full max-w-xl">
+          <div className="w-full max-w-md shrink-0 lg:max-w-sm">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by service name or category..."
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                className="h-10 w-full rounded-lg border border-slate-200/90 bg-slate-50/80 pl-9 pr-3 text-sm font-normal text-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 placeholder:text-slate-400 focus:border-[#1e3a5f] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
               />
             </div>
           </div>
@@ -544,38 +580,38 @@ export default function ServicePortalsPage() {
 
         {/* Quick stats */}
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-500">Favorites</p>
+              <p className="text-sm font-medium text-slate-500">Favorites</p>
               <Sparkles className="h-5 w-5 text-amber-500" />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-slate-900">{favorites.size}</p>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{favorites.size}</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-500">Recently Opened</p>
+              <p className="text-sm font-medium text-slate-500">Recently Opened</p>
               <History className="h-5 w-5 text-blue-600" />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-slate-900">{recentIds.length}</p>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{recentIds.length}</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-500">Frequently Used</p>
+              <p className="text-sm font-medium text-slate-500">Frequently Used</p>
               <Globe className="h-5 w-5 text-emerald-600" />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-slate-900">
+            <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
               {frequentlyUsed.length}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-500">Showing</p>
+              <p className="text-sm font-medium text-slate-500">Showing</p>
               <Search className="h-5 w-5 text-slate-600" />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-slate-900">
+            <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
               {filteredServices.length}
             </p>
           </div>
@@ -583,15 +619,15 @@ export default function ServicePortalsPage() {
       </div>
 
       {/* Category tabs */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(2,6,23,0.08)]">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_2px_10px_rgba(0,0,0,0.04)] sm:p-4">
         <div className="flex w-full items-center gap-2 overflow-x-auto pb-1">
           <button
             type="button"
             onClick={() => setActiveCategory('all')}
             className={classNames(
-              'shrink-0 rounded-xl px-4 py-2 text-sm font-extrabold transition',
+              'shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20',
               activeCategory === 'all'
-                ? 'bg-[#1e3a5f] text-white'
+                ? 'bg-[#1e3a5f] text-white shadow-sm'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
             )}
           >
@@ -606,9 +642,9 @@ export default function ServicePortalsPage() {
                 type="button"
                 onClick={() => setActiveCategory(c.key)}
                 className={classNames(
-                  'shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-extrabold transition',
+                  'shrink-0 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20',
                   activeCategory === c.key
-                    ? 'bg-[#1e3a5f] text-white'
+                    ? 'bg-[#1e3a5f] text-white shadow-sm'
                     : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                 )}
               >
@@ -628,9 +664,9 @@ export default function ServicePortalsPage() {
       {/* Bonus: Favorites / Frequently used / Recent */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Favorites */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(2,6,23,0.08)]">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-extrabold text-slate-900">Favorites</h2>
+            <h2 className="text-base font-semibold text-slate-900">Favorites</h2>
             <Badge color="bg-amber-50 text-amber-800 border border-amber-200">
               {favorites.size}
             </Badge>
@@ -660,9 +696,9 @@ export default function ServicePortalsPage() {
         </div>
 
         {/* Frequently used */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(2,6,23,0.08)]">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-extrabold text-slate-900">Frequently Used</h2>
+            <h2 className="text-base font-semibold text-slate-900">Frequently Used</h2>
             <Badge color="bg-emerald-50 text-emerald-800 border border-emerald-200">
               Top
             </Badge>
@@ -694,9 +730,9 @@ export default function ServicePortalsPage() {
         </div>
 
         {/* Recent */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(2,6,23,0.08)]">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-extrabold text-slate-900">Recently Opened</h2>
+            <h2 className="text-base font-semibold text-slate-900">Recently Opened</h2>
             <Badge color="bg-blue-50 text-blue-700 border border-blue-200">
               {recentIds.length}
             </Badge>
@@ -728,14 +764,14 @@ export default function ServicePortalsPage() {
 
       {/* Category sections */}
       {filteredServices.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-[0_16px_40px_rgba(2,6,23,0.08)]">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 ring-1 ring-slate-200">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 ring-1 ring-slate-200/80">
             <Search className="h-6 w-6 text-slate-500" />
           </div>
-          <h3 className="mt-4 text-lg font-extrabold text-slate-900">
+          <h3 className="mt-4 text-lg font-semibold text-slate-900">
             No service portals found
           </h3>
-          <p className="mt-2 text-sm font-semibold text-slate-500">
+          <p className="mt-2 text-sm font-normal text-slate-500">
             Try adjusting your search or selecting a different category.
           </p>
           <div className="mt-6 flex justify-center gap-3">
@@ -745,9 +781,9 @@ export default function ServicePortalsPage() {
                 setSearch('')
                 setActiveCategory('all')
               }}
-              className="rounded-xl bg-[#1e3a5f] px-5 py-2 text-sm font-semibold text-white hover:bg-[#16304f]"
+              className="rounded-lg bg-[#1e3a5f] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#16304f] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25"
             >
-              Clear Filters
+              Clear filters
             </button>
           </div>
         </div>
@@ -768,10 +804,10 @@ export default function ServicePortalsPage() {
                       <CatIcon className="h-5 w-5 text-[#1e3a5f]" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-extrabold text-slate-900">
+                      <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
                         {cat.title}
                       </h2>
-                      <p className="text-sm font-semibold text-slate-500">
+                      <p className="text-sm font-normal text-slate-500">
                         Quick access to official portals
                       </p>
                     </div>

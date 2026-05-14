@@ -7,34 +7,37 @@ import {
   CheckCircle2,
   Clock3,
   Layers3,
-  Pencil,
-  X,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
 } from 'lucide-react'
 
 import { supabase } from '../../lib/supabase'
 import Badge from '../../components/ui/Badge'
-import Button from '../../components/ui/Button'
-import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import { formatCurrency, formatDate } from '../../utils/helpers'
 
 const STATUS_OPTIONS = ['All', 'Submitted', 'In Process', 'On Hold', 'Completed', 'Rejected']
 const PAYMENT_OPTIONS = ['Pending', 'Paid']
 
-function StatCard({ title, value, icon: Icon }) {
+function StatCard({ title, value, icon: Icon, loading }) {
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-slate-200/80 bg-white px-7 py-9 shadow-[0_2px_10px_rgba(0,0,0,0.04)] animate-pulse">
+        <div className="flex items-start justify-between">
+          <div className="h-4 w-32 rounded-md bg-slate-200" />
+          <div className="h-11 w-11 rounded-xl bg-slate-100" />
+        </div>
+        <div className="mt-6 h-9 w-20 rounded-lg bg-slate-100" />
+      </div>
+    )
+  }
+
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white px-8 py-6 shadow-[0_16px_40px_rgba(2,6,23,0.08)]">
-      <div className="flex items-start justify-between">
-        <p className="text-sm font-semibold text-slate-500">{title}</p>
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200">
+    <div className="rounded-2xl border border-slate-200/80 bg-white px-7 py-9 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-medium text-slate-500">{title}</p>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200/80">
           <Icon className="h-5 w-5 text-[#1e3a5f]" />
         </div>
       </div>
-      <div className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900">
-        {value ?? '—'}
-      </div>
+      <div className="mt-5 text-4xl font-bold tracking-tight text-slate-900">{value ?? '—'}</div>
     </div>
   )
 }
@@ -146,78 +149,84 @@ export default function DashboardPage() {
   }, [statusFilter, serviceFilter, dateFilter])
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
       <div>
-        <h1 className="text-3xl font-extrabold text-slate-900">Dashboard Overview</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Dashboard overview</h1>
 
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            title="Total Applications"
+            title="Total applications"
             value={statsLoading ? '—' : stats?.total_apps}
             icon={Layers3}
+            loading={statsLoading}
           />
           <StatCard
-            title="In Process"
+            title="In process"
             value={statsLoading ? '—' : stats?.in_process}
             icon={Clock3}
+            loading={statsLoading}
           />
           <StatCard
             title="Completed"
             value={statsLoading ? '—' : stats?.completed}
             icon={CheckCircle2}
+            loading={statsLoading}
           />
           <StatCard
-            title="Pending Today"
+            title="Pending today"
             value={statsLoading ? '—' : stats?.pending_today}
             icon={CalendarDays}
+            loading={statsLoading}
           />
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-2xl font-extrabold text-slate-900">Recent Applications</h2>
+      <div className="space-y-5">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)] sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Recent applications</h2>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s === 'All' ? 'All Status' : s}
-                </option>
-              ))}
-            </select>
+            <div className="flex flex-wrap gap-2 sm:items-center sm:justify-end">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-10 min-w-[140px] rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s === 'All' ? 'All Status' : s}
+                  </option>
+                ))}
+              </select>
 
-            <select
-              value={serviceFilter}
-              onChange={(e) => setServiceFilter(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-            >
-              <option value="All">All Services</option>
-              {serviceOptions.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
+              <select
+                value={serviceFilter}
+                onChange={(e) => setServiceFilter(e.target.value)}
+                className="h-10 min-w-[160px] flex-1 rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 sm:flex-initial"
+              >
+                <option value="All">All Services</option>
+                {serviceOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
 
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-            />
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="h-10 rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_40px_rgba(2,6,23,0.08)]">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
           <div className="overflow-x-auto">
             <table className="min-w-[980px] w-full">
-              <thead>
-                <tr className="bg-white">
+              <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm">
+                <tr>
                   {[
                     'Application ID',
                     'Name',
@@ -231,7 +240,7 @@ export default function DashboardPage() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-5 py-4 text-left text-sm font-bold text-slate-500"
+                      className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
                     >
                       {h}
                     </th>
@@ -241,53 +250,61 @@ export default function DashboardPage() {
 
               <tbody className="divide-y divide-slate-100">
                 {appsLoading ? (
-                  <tr>
-                    <td colSpan={9} className="px-5 py-10">
-                      <div className="flex justify-center">
-                        <LoadingSpinner label="Loading applications..." />
-                      </div>
-                    </td>
-                  </tr>
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse bg-white">
+                      {Array.from({ length: 9 }).map((__, j) => (
+                        <td key={j} className="px-5 py-3.5">
+                          <div className="h-3.5 w-full max-w-[120px] rounded bg-slate-100" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
                 ) : applications.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-5 py-10">
-                      <div className="text-center text-sm font-semibold text-slate-500">
-                        No applications found.
+                    <td colSpan={9} className="px-5 py-14">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-400">
+                          <Layers3 className="h-6 w-6" />
+                        </div>
+                        <p className="mt-3 text-sm font-semibold text-slate-800">No applications found</p>
+                        <p className="mt-1 max-w-sm text-sm font-normal text-slate-500">
+                          Adjust filters or pick another date to see results.
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   applications.map((app) => (
-                    <tr key={app.id} className="bg-white">
-                      <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                    <tr key={app.id} className="bg-white transition-colors duration-200 hover:bg-slate-50/80">
+                      <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                         {app.application_id}
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                      <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                         {app.name}
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                      <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                         {app.phone}
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                      <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                         {app.service_name}
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                      <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                         {getAppCostDisplay(app)}
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-slate-600">
+                      <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                         {formatDate(app.created_at)}
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <Badge status={app.payment_status}>{app.payment_status}</Badge>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <Badge status={app.status}>{app.status}</Badge>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-3.5">
                         <button
                           type="button"
                           onClick={() => openModal(app)}
-                          className="rounded-full bg-blue-100 px-5 py-2 text-sm font-bold text-blue-700 hover:bg-blue-200"
+                          className="inline-flex min-h-[36px] items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[#1e3a5f] shadow-sm transition-all duration-200 hover:border-[#1e3a5f]/25 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
                         >
                           View
                         </button>
