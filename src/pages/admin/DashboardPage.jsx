@@ -16,28 +16,39 @@ import { formatCurrency, formatDate } from '../../utils/helpers'
 const STATUS_OPTIONS = ['All', 'Submitted', 'In Process', 'On Hold', 'Completed', 'Rejected']
 const PAYMENT_OPTIONS = ['Pending', 'Paid']
 
-function StatCard({ title, value, icon: Icon, loading }) {
+function StatCard({ title, value, icon: Icon, loading, color = "blue" }) {
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200/80 bg-white px-7 py-9 shadow-[0_2px_10px_rgba(0,0,0,0.04)] animate-pulse">
+      <div className="rounded-2xl border border-slate-100 bg-white px-6 py-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-pulse">
         <div className="flex items-start justify-between">
-          <div className="h-4 w-32 rounded-md bg-slate-200" />
-          <div className="h-11 w-11 rounded-xl bg-slate-100" />
+          <div className="h-4 w-24 rounded bg-slate-100" />
+          <div className="h-10 w-10 rounded-xl bg-slate-50" />
         </div>
-        <div className="mt-6 h-9 w-20 rounded-lg bg-slate-100" />
+        <div className="mt-6 h-10 w-20 rounded-lg bg-slate-50" />
       </div>
     )
   }
 
+  const iconColors = {
+    blue: "text-blue-600 bg-blue-50 ring-blue-100",
+    amber: "text-amber-600 bg-amber-50 ring-amber-100",
+    emerald: "text-emerald-600 bg-emerald-50 ring-emerald-100",
+    indigo: "text-indigo-600 bg-indigo-50 ring-indigo-100",
+  }
+
+  const colorStyle = iconColors[color] || iconColors.blue
+
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white px-7 py-9 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group rounded-2xl border border-slate-100 bg-white px-6 py-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)]">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200/80">
-          <Icon className="h-5 w-5 text-[#1e3a5f]" />
+        <p className="text-sm font-semibold tracking-wide text-slate-500 uppercase">{title}</p>
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 transition-transform duration-300 group-hover:scale-110 ${colorStyle}`}>
+          <Icon className="h-5 w-5" />
         </div>
       </div>
-      <div className="mt-5 text-4xl font-bold tracking-tight text-slate-900">{value ?? '—'}</div>
+      <div className="mt-4 flex items-baseline gap-2">
+        <div className="text-3xl font-extrabold tracking-tight text-slate-900">{value ?? '0'}</div>
+      </div>
     </div>
   )
 }
@@ -159,38 +170,45 @@ export default function DashboardPage() {
             value={statsLoading ? '—' : stats?.total_apps}
             icon={Layers3}
             loading={statsLoading}
+            color="indigo"
           />
           <StatCard
             title="In process"
             value={statsLoading ? '—' : stats?.in_process}
             icon={Clock3}
             loading={statsLoading}
+            color="amber"
           />
           <StatCard
             title="Completed"
             value={statsLoading ? '—' : stats?.completed}
             icon={CheckCircle2}
             loading={statsLoading}
+            color="emerald"
           />
           <StatCard
             title="Pending today"
             value={statsLoading ? '—' : stats?.pending_today}
             icon={CalendarDays}
             loading={statsLoading}
+            color="blue"
           />
         </div>
       </div>
 
-      <div className="space-y-5">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)] sm:p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
             <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Recent applications</h2>
+            <p className="mt-1 text-sm text-slate-500">Overview of the latest 10 submissions across the platform.</p>
+          </div>
 
-            <div className="flex flex-wrap gap-2 sm:items-center sm:justify-end">
+          <div className="flex flex-wrap gap-3 sm:items-center">
+            <div className="relative">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 min-w-[140px] rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                className="h-10 min-w-[140px] appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-9 text-sm font-semibold text-slate-700 shadow-sm transition-all focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/10"
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
@@ -198,11 +216,16 @@ export default function DashboardPage() {
                   </option>
                 ))}
               </select>
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+              </div>
+            </div>
 
+            <div className="relative flex-1 sm:flex-initial">
               <select
                 value={serviceFilter}
                 onChange={(e) => setServiceFilter(e.target.value)}
-                className="h-10 min-w-[160px] flex-1 rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 sm:flex-initial"
+                className="h-10 min-w-[160px] w-full appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-9 text-sm font-semibold text-slate-700 shadow-sm transition-all focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/10"
               >
                 <option value="All">All Services</option>
                 {serviceOptions.map((name) => (
@@ -211,14 +234,17 @@ export default function DashboardPage() {
                   </option>
                 ))}
               </select>
-
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="h-10 rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-              />
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+              </div>
             </div>
+
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition-all focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/10"
+            />
           </div>
         </div>
 
@@ -236,6 +262,7 @@ export default function DashboardPage() {
                     'Created Date',
                     'Payment Status',
                     'Application Status',
+                    'Source',
                     'Actions',
                   ].map((h) => (
                     <th
@@ -299,6 +326,11 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <Badge status={app.status}>{app.status}</Badge>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <Badge color={(app.source || 'offline').toLowerCase() === 'online' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-800 border border-slate-200'}>
+                          {app.source || 'Offline'}
+                        </Badge>
                       </td>
                       <td className="px-5 py-3.5">
                         <button

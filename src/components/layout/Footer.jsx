@@ -1,7 +1,8 @@
 // src/components/layout/Footer.jsx
 import React, { useEffect, useMemo, useState } from 'react'
 import { MapPin, Mail, Phone, Shield, FileText, Globe } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
+import { useBranding } from '../../context/BrandingContext'
+import { useServices } from '../../context/ServicesContext'
 
 function normalizePhoneForLinks(raw) {
   const digits = String(raw || '').replace(/\D/g, '')
@@ -13,35 +14,12 @@ function normalizePhoneForLinks(raw) {
   return { display: raw, wa: waDigits, tel: telDigits }
 }
 
-export default function Footer({ services = [] }) {
-  const [branding, setBranding] = useState({
-    business_name: 'Aarohi Multiservices',
-    contact: '',
-    email: '',
-    logo_icon_url: '/default-icon.png',
-    logo_wordmark_url: '/default-wordmark.png',
-  });
+export default function Footer() {
+  const { branding } = useBranding()
+  const { services } = useServices()
+  
   const [iconFailed, setIconFailed] = useState(false)
   const [wordmarkFailed, setWordmarkFailed] = useState(false)
-
-  useEffect(() => {
-    const fetchBranding = async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_public_branding')
-        if (error) throw error
-        setBranding({
-          business_name: data?.business_name || 'Aarohi Multiservices',
-          contact: data?.contact || '',
-          email: data?.email || '',
-          logo_icon_url: data?.logo_icon_url || '',
-          logo_wordmark_url: data?.logo_wordmark_url || '',
-        })
-      } catch (e) {
-        console.error('Footer branding fetch error:', e)
-      }
-    }
-    fetchBranding()
-  }, [])
 
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 
@@ -241,27 +219,21 @@ export default function Footer({ services = [] }) {
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-white/55">
             <a
-              href="https://example.com/privacy-policy"
-              target="_blank"
-              rel="noreferrer"
+              href="/privacy-policy"
               className="inline-flex items-center gap-2 transition-colors duration-200 hover:text-white"
             >
               <Shield className="h-4 w-4 shrink-0 text-amber-400/80" />
               Privacy Policy
             </a>
             <a
-              href="https://example.com/terms"
-              target="_blank"
-              rel="noreferrer"
+              href="/terms"
               className="inline-flex items-center gap-2 transition-colors duration-200 hover:text-white"
             >
               <FileText className="h-4 w-4 shrink-0 text-amber-400/80" />
               Terms
             </a>
             <a
-              href="https://example.com/refund-policy"
-              target="_blank"
-              rel="noreferrer"
+              href="/refund-policy"
               className="transition-colors duration-200 hover:text-white"
             >
               Refund Policy

@@ -9,6 +9,7 @@ import Badge from '../../components/ui/Badge'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import { formatCurrency, formatDate } from '../../utils/helpers'
 import { useAuth } from '../../context/AuthContext'
+import DateRangePopover from '../../components/common/DateRangePopover'
 
 function RevenueCard({ title, value, accent = 'text-[#1e3a5f]' }) {
   return (
@@ -21,70 +22,6 @@ function RevenueCard({ title, value, accent = 'text-[#1e3a5f]' }) {
   )
 }
 
-function DateRangePopover({
-  open,
-  onClose,
-  startDate,
-  endDate,
-  setStartDate,
-  setEndDate,
-}) {
-  if (!open) return null
-
-  return (
-    <div className="absolute right-0 top-[calc(100%+8px)] z-20 w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
-      <p className="text-sm font-extrabold text-slate-900">Date Range</p>
-
-      <div className="mt-3 grid grid-cols-1 gap-3">
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">
-            From
-          </label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">
-            To
-          </label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-          />
-        </div>
-
-        <div className="flex items-center justify-between pt-1">
-          <button
-            type="button"
-            onClick={() => {
-              setStartDate('')
-              setEndDate('')
-              onClose?.()
-            }}
-            className="text-sm font-semibold text-slate-600 hover:underline"
-          >
-            Clear
-          </button>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg bg-[#1e3a5f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#16304f]"
-          >
-            Apply
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function getRowAmountDisplay(row) {
   // Paid => always show paid_amount (Policy 1)
@@ -109,46 +46,11 @@ export default function RevenuePage() {
   const [loadingStats, setLoadingStats] = useState(true)
   const [loadingTable, setLoadingTable] = useState(true)
 
-  // paidApps used for stat calculations (paid_amount + created_at)
-  const [paidApps, setPaidApps] = useState([])
-
-  // pending stats
+  const [totalRevenue, setTotalRevenue] = useState(0)
+  const [todayRevenue, setTodayRevenue] = useState(0)
+  const [monthRevenue, setMonthRevenue] = useState(0)
   const [pendingKnownTotal, setPendingKnownTotal] = useState(0)
   const [pendingUnknownCount, setPendingUnknownCount] = useState(0)
-
-  const [tableRows, setTableRows] = useState([])
-
-  const [serviceOptions, setServiceOptions] = useState([])
-  const [serviceFilter, setServiceFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('Paid')
-
-  const [dateOpen, setDateOpen] = useState(false)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-
-  const todayKey = useMemo(() => new Date().toDateString(), [])
-  const currentMonth = useMemo(() => new Date().getMonth(), [])
-  const currentYear = useMemo(() => new Date().getFullYear(), [])
-
-  // ✅ Revenue is based on paid_amount (Policy 1)
-  const totalRevenue = useMemo(() => {
-    return (paidApps || []).reduce((sum, a) => sum + Number(a.paid_amount || 0), 0)
-  }, [paidApps])
-
-  const todayRevenue = useMemo(() => {
-    return (paidApps || [])
-      .filter((a) => new Date(a.created_at).toDateString() === todayKey)
-      .reduce((sum, a) => sum + Number(a.paid_amount || 0), 0)
-  }, [paidApps, todayKey])
-
-  const monthRevenue = useMemo(() => {
-    return (paidApps || [])
-      .filter((a) => {
-        const d = new Date(a.created_at)
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear
-      })
-      .reduce((sum, a) => sum + Number(a.paid_amount || 0), 0)
-  }, [paidApps, currentMonth, currentYear])
 
   const pendingCardValue = useMemo(() => {
     const base = formatCurrency(pendingKnownTotal)
@@ -156,41 +58,33 @@ export default function RevenuePage() {
     return base
   }, [pendingKnownTotal, pendingUnknownCount])
 
+  // Pagination for table
+  const PAGE_SIZE = 15
+  const [page, setPage] = useState(1)
+  const [count, setCount] = useState(0)
+  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE))
+
+  // Filters & Table State
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [dateOpen, setDateOpen] = useState(false)
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [serviceFilter, setServiceFilter] = useState('all')
+  const [serviceOptions, setServiceOptions] = useState([])
+  const [tableRows, setTableRows] = useState([])
+
   const fetchStats = async () => {
     try {
       setLoadingStats(true)
 
-      // Paid: only what we need for sums
-      const { data: paidData, error: paidError } = await supabase
-        .from('applications')
-        .select('paid_amount, created_at')
-        .eq('payment_status', 'Paid')
-        .order('created_at', { ascending: false })
+      const { data, error } = await supabase.rpc('get_revenue_stats')
+      if (error) throw error
 
-      if (paidError) throw paidError
-      setPaidApps(paidData || [])
-
-      // Pending: use numeric cost for known sum, and count unknown (text/no numeric)
-      const { data: pendingData, error: pendingError } = await supabase
-        .from('applications')
-        .select('cost, cost_text')
-        .eq('payment_status', 'Pending')
-
-      if (pendingError) throw pendingError
-
-      const pendingSum = (pendingData || []).reduce((sum, a) => {
-        const n = Number(a.cost)
-        return sum + (Number.isFinite(n) ? n : 0)
-      }, 0)
-
-      const unknown = (pendingData || []).filter((a) => {
-        const hasNumeric = Number.isFinite(Number(a.cost))
-        const hasText = String(a.cost_text || '').trim().length > 0
-        return !hasNumeric && hasText
-      }).length
-
-      setPendingKnownTotal(pendingSum)
-      setPendingUnknownCount(unknown)
+      setTotalRevenue(data?.totalRevenue || 0)
+      setTodayRevenue(data?.todayRevenue || 0)
+      setMonthRevenue(data?.monthRevenue || 0)
+      setPendingKnownTotal(data?.pendingKnownTotal || 0)
+      setPendingUnknownCount(data?.pendingUnknownCount || 0)
     } catch (err) {
       console.error('Revenue stats error:', err)
       toast.error(err.message || 'Failed to load revenue')
@@ -218,7 +112,8 @@ export default function RevenuePage() {
 
       let query = supabase
         .from('applications')
-        .select('application_id,name,service_name,cost,cost_text,paid_amount,payment_status,created_at')
+        .select('application_id,name,service_name,cost,cost_text,paid_amount,payment_status,created_at', { count: 'exact' })
+        .in('payment_status', ['Paid', 'Pending'])
         .order('created_at', { ascending: false })
 
       if (statusFilter === 'Paid') query = query.eq('payment_status', 'Paid')
@@ -235,10 +130,15 @@ export default function RevenuePage() {
         query = query.lte('created_at', endIso)
       }
 
-      const { data, error } = await query
+      const from = (page - 1) * PAGE_SIZE
+      const to = page * PAGE_SIZE - 1
+      query = query.range(from, to)
+
+      const { data, error, count: tableCount } = await query
       if (error) throw error
 
       setTableRows(data || [])
+      setCount(tableCount || 0)
     } catch (err) {
       console.error('Revenue table error:', err)
       toast.error(err.message || 'Failed to load revenue table')
@@ -258,7 +158,7 @@ export default function RevenuePage() {
     if (!isAdmin) return
     fetchTable()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, startDate, endDate, serviceFilter, statusFilter])
+  }, [isAdmin, startDate, endDate, serviceFilter, statusFilter, page])
 
   if (!isAdmin) {
     return (
@@ -320,15 +220,15 @@ export default function RevenuePage() {
             onClose={() => setDateOpen(false)}
             startDate={startDate}
             endDate={endDate}
-            setStartDate={setStartDate}
-            setEndDate={setEndDate}
+            setStartDate={(v) => { setStartDate(v); setPage(1); }}
+            setEndDate={(v) => { setEndDate(v); setPage(1); }}
           />
         </div>
 
         <div className="relative">
           <select
             value={serviceFilter}
-            onChange={(e) => setServiceFilter(e.target.value)}
+            onChange={(e) => { setServiceFilter(e.target.value); setPage(1); }}
             className="h-10 appearance-none rounded-lg border border-slate-200 bg-slate-50 px-5 pr-10 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
           >
             <option value="all">Service</option>
@@ -344,7 +244,7 @@ export default function RevenuePage() {
         <div className="relative">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
             className="h-10 appearance-none rounded-lg border border-slate-200 bg-slate-50 px-5 pr-10 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
           >
             <option value="Paid">Status</option>
@@ -359,13 +259,13 @@ export default function RevenuePage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(2,6,23,0.12)]">
         <div className="overflow-x-auto">
           <table className="min-w-[920px] w-full">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm">
               <tr>
                 {['Application ID', 'Name', 'Service', 'Amount', 'Payment', 'Date'].map(
                   (h) => (
                     <th
                       key={h}
-                      className="px-6 py-5 text-left text-lg font-extrabold text-slate-600"
+                      className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
                     >
                       {h}
                     </th>
@@ -376,16 +276,18 @@ export default function RevenuePage() {
 
             <tbody className="divide-y divide-slate-100">
               {loadingTable ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-14">
-                    <div className="flex justify-center">
-                      <LoadingSpinner label="Loading revenue..." />
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse bg-white">
+                    {Array.from({ length: 6 }).map((__, j) => (
+                      <td key={j} className="px-5 py-3.5">
+                        <div className="h-3.5 w-full max-w-[140px] rounded bg-slate-100" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : tableRows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-14">
+                  <td colSpan={6} className="px-5 py-14">
                     <div className="text-center text-sm font-semibold text-slate-500">
                       No records found.
                     </div>
@@ -393,23 +295,23 @@ export default function RevenuePage() {
                 </tr>
               ) : (
                 tableRows.map((row) => (
-                  <tr key={`${row.application_id}-${row.created_at}`}>
-                    <td className="px-6 py-5 text-lg font-extrabold text-slate-900">
+                  <tr key={`${row.application_id}-${row.created_at}`} className="bg-white transition-colors duration-200 hover:bg-slate-50/80">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {row.application_id}
                     </td>
-                    <td className="px-6 py-5 text-lg font-extrabold text-slate-900">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {row.name}
                     </td>
-                    <td className="px-6 py-5 text-lg font-extrabold text-slate-900">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {row.service_name}
                     </td>
-                    <td className="px-6 py-5 text-lg font-extrabold text-slate-900">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {getRowAmountDisplay(row)}
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-5 py-3.5">
                       <Badge status={row.payment_status}>{row.payment_status}</Badge>
                     </td>
-                    <td className="px-6 py-5 text-lg font-extrabold text-slate-900">
+                    <td className="px-5 py-3.5 text-sm font-normal text-slate-700">
                       {formatDate(row.created_at)}
                     </td>
                   </tr>
@@ -419,11 +321,32 @@ export default function RevenuePage() {
           </table>
         </div>
 
-        <div className="border-t border-slate-100 px-6 py-4 text-xs font-semibold text-slate-400">
-          <span className="inline-flex items-center gap-2">
-            <CalendarDays className="h-4 w-4" />
-            Filters apply to the table.
-          </span>
+        <div className="flex flex-col gap-3 border-t border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm font-semibold text-slate-500">
+            Total Records: <span className="text-slate-800">{count}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page <= 1 || loadingTable}
+              className="rounded-lg px-3 py-1 text-sm font-semibold text-[#1e3a5f] hover:bg-slate-100 disabled:opacity-50"
+            >
+              &lt; Prev
+            </button>
+            <span className="text-sm font-medium text-slate-600">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages || loadingTable}
+              className="rounded-lg px-3 py-1 text-sm font-semibold text-[#1e3a5f] hover:bg-slate-100 disabled:opacity-50"
+            >
+              Next &gt;
+            </button>
+          </div>
         </div>
       </div>
     </div>

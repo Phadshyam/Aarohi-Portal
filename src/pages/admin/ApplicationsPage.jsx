@@ -1,5 +1,5 @@
 // src/pages/admin/ApplicationsPage.jsx
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import ApplicationDetailModal from '../../components/admin/ApplicationDetailModal'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -9,11 +9,14 @@ import {
   Plus,
   Search,
   X,
+  Download,
 } from 'lucide-react'
 
 import { supabase } from '../../lib/supabase'
 import Badge from '../../components/ui/Badge'
 import { formatCurrency, formatDate } from '../../utils/helpers'
+import { useServices } from '../../context/ServicesContext'
+import DateRangePopover from '../../components/common/DateRangePopover'
 
 const PAGE_SIZE = 10
 
@@ -70,75 +73,6 @@ function TogglePayment({ value, onChange }) {
   )
 }
 
-function DateRangePopover({ open, onClose, startDate, endDate, setStartDate, setEndDate }) {
-  const ref = useRef(null)
-
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) onClose?.()
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [open, onClose])
-
-  if (!open) return null
-
-  return (
-    <div
-      ref={ref}
-      className="absolute right-0 top-[calc(100%+8px)] z-20 w-72 rounded-xl border border-slate-200/90 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)]"
-    >
-      <p className="text-sm font-semibold text-slate-900">Select date range</p>
-
-      <div className="mt-3 space-y-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
-            From
-          </label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="h-10 w-full rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-normal text-slate-700 transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
-            To
-          </label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="h-10 w-full rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-normal text-slate-700 transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-          />
-        </div>
-
-        <div className="flex items-center justify-between pt-1">
-          <button
-            type="button"
-            onClick={() => {
-              setStartDate('')
-              setEndDate('')
-              onClose?.()
-            }}
-            className="text-sm font-semibold text-slate-600 hover:underline"
-          >
-            Clear
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg bg-[#1e3a5f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#16304f]"
-          >
-            Apply
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function ApplicationsPage() {
   const navigate = useNavigate()
@@ -151,6 +85,7 @@ export default function ApplicationsPage() {
 
   const [statusFilter, setStatusFilter] = useState('all')
   const [serviceFilter, setServiceFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState('all')
 
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -162,14 +97,35 @@ export default function ApplicationsPage() {
   const [count, setCount] = useState(0)
 
   const [page, setPage] = useState(1)
+  const [refresh, setRefresh] = useState(0)
 
-  const [services, setServices] = useState([])
+  const { services: servicesData } = useServices()
+  const services = useMemo(() => (servicesData || []).map(s => s.name), [servicesData])
 
   const [selected, setSelected] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
 
+  // Export State
+  const [exportModalOpen, setExportModalOpen] = useState(false)
+  const [exportStart, setExportStart] = useState('')
+  const [exportEnd, setExportEnd] = useState('')
+  const [exportLoading, setExportLoading] = useState(false)
+
   const totalPages = useMemo(() => Math.max(1, Math.ceil((count || 0) / PAGE_SIZE)), [count])
   const pages = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages])
+
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('applications_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'applications' }, () => {
+        setRefresh((prev) => prev + 1)
+      })
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   // Debounce search 300ms
   useEffect(() => {
@@ -179,23 +135,6 @@ export default function ApplicationsPage() {
     }, 300)
     return () => window.clearTimeout(t)
   }, [searchInput])
-
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('services')
-          .select('name')
-          .order('name', { ascending: true })
-
-        if (error) throw error
-        setServices((data || []).map((s) => s.name))
-      } catch (err) {
-        console.error('Fetch services error:', err)
-      }
-    }
-    fetchServices()
-  }, [])
 
   const fetchApplications = async () => {
     try {
@@ -208,13 +147,18 @@ export default function ApplicationsPage() {
 
       if (statusFilter !== 'all') query = query.eq('status', statusFilter)
       if (serviceFilter !== 'all') query = query.eq('service_name', serviceFilter)
+      if (sourceFilter !== 'all') query = query.eq('source', sourceFilter.toLowerCase())
 
       if (searchTerm) {
-        query = query.or(
-          `name.ilike.%${searchTerm}%,` +
-            `phone.ilike.%${searchTerm}%,` +
-            `application_id.ilike.%${searchTerm}%`
-        )
+        // Sanitize: strip characters that could manipulate PostgREST filter grammar
+        const safe = searchTerm.replace(/[^a-zA-Z0-9\s\-]/g, '')
+        if (safe) {
+          query = query.or(
+            `name.ilike.%${safe}%,` +
+              `phone.ilike.%${safe}%,` +
+              `application_id.ilike.%${safe}%`
+          )
+        }
       }
 
       if (startDate) {
@@ -247,7 +191,94 @@ export default function ApplicationsPage() {
   useEffect(() => {
     fetchApplications()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, serviceFilter, searchTerm, startDate, endDate, page])
+  }, [statusFilter, serviceFilter, sourceFilter, searchTerm, startDate, endDate, page, refresh])
+
+  const handleExportConfirm = async () => {
+    if (exportStart && exportEnd) {
+      if (new Date(exportStart) > new Date(exportEnd)) {
+        toast.error('From date cannot be greater than To date')
+        return
+      }
+    }
+
+    try {
+      setExportLoading(true)
+
+      let query = supabase
+        .from('applications')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (statusFilter !== 'all') query = query.eq('status', statusFilter)
+      if (serviceFilter !== 'all') query = query.eq('service_name', serviceFilter)
+      if (sourceFilter !== 'all') query = query.eq('source', sourceFilter.toLowerCase())
+
+      if (searchTerm) {
+        const safe = searchTerm.replace(/[^a-zA-Z0-9\s\-]/g, '')
+        if (safe) {
+          query = query.or(
+            `name.ilike.%${safe}%,` +
+            `phone.ilike.%${safe}%,` +
+            `application_id.ilike.%${safe}%`
+          )
+        }
+      }
+
+      if (exportStart) {
+        const startIso = new Date(`${exportStart}T00:00:00`).toISOString()
+        query = query.gte('created_at', startIso)
+      }
+      if (exportEnd) {
+        const endIso = new Date(`${exportEnd}T23:59:59.999`).toISOString()
+        query = query.lte('created_at', endIso)
+      }
+
+      const { data, error } = await query
+      if (error) throw error
+
+      if (!data || !data.length) {
+        toast.error('No records found to export in this date range')
+        return
+      }
+
+      const headers = ['Application ID', 'Date', 'Name', 'Phone', 'Service', 'Cost', 'Paid Amount', 'Status', 'Payment Status', 'Source']
+      const rows = data.map(app => [
+        app.application_id || '',
+        app.created_at ? new Date(app.created_at).toLocaleDateString() : '',
+        app.name || '',
+        app.phone || '',
+        app.service_name || '',
+        app.cost_text || app.cost || '',
+        app.paid_amount || '0',
+        app.status || '',
+        app.payment_status || '',
+        app.source || ''
+      ])
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      ].join('\n')
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `applications-${new Date().toISOString().slice(0, 10)}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      toast.success('Export successful')
+      setExportModalOpen(false)
+    } catch (err) {
+      console.error('Export CSV error:', err)
+      toast.error('Failed to export CSV')
+    } finally {
+      setExportLoading(false)
+    }
+  }
 
   const openModal = (app) => {
     setSelected(app)
@@ -297,6 +328,19 @@ export default function ApplicationsPage() {
               ))}
             </select>
 
+            <select
+              value={sourceFilter}
+              onChange={(e) => {
+                setSourceFilter(e.target.value)
+                setPage(1)
+              }}
+              className="h-10 min-w-[140px] rounded-lg border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+            >
+              <option value="all">All Sources</option>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+            </select>
+
             <div className="relative">
               <button
                 type="button"
@@ -331,6 +375,16 @@ export default function ApplicationsPage() {
               <Plus className="h-4 w-4" />
               Add application
             </button>
+
+            <button
+              type="button"
+              onClick={() => setExportModalOpen(true)}
+              disabled={loading}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200/90 bg-white px-4 text-sm font-semibold text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              <span>Export</span>
+            </button>
           </div>
 
           <div className="relative w-full min-w-0 xl:max-w-md">
@@ -359,6 +413,7 @@ export default function ApplicationsPage() {
                   'Created date',
                   'Payment status',
                   'Application status',
+                  'Source',
                   'Actions',
                 ].map((h) => (
                   <th
@@ -407,6 +462,7 @@ export default function ApplicationsPage() {
                             setSearchInput('')
                             setStatusFilter('all')
                             setServiceFilter('all')
+                            setSourceFilter('all')
                             setStartDate('')
                             setEndDate('')
                             setPage(1)
@@ -445,6 +501,11 @@ export default function ApplicationsPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge status={app.status}>{app.status}</Badge>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <Badge color={app.source === 'online' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-800 border border-slate-200'}>
+                        {app.source || 'offline'}
+                      </Badge>
                     </td>
                     <td className="px-5 py-3.5">
                       <button
@@ -518,6 +579,56 @@ export default function ApplicationsPage() {
         onClose={closeModal}
         onSaved={fetchApplications}
       />
+
+      {/* Export Modal */}
+      {exportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-slate-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">Export Applications</h2>
+              <button 
+                onClick={() => setExportModalOpen(false)} 
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-slate-500 mt-2">
+              Select a date range to export. Current filters (status, service, search) will apply.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">From Date</label>
+                <input
+                  type="date"
+                  value={exportStart}
+                  onChange={(e) => setExportStart(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-800 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">To Date</label>
+                <input
+                  type="date"
+                  value={exportEnd}
+                  onChange={(e) => setExportEnd(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-800 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleExportConfirm}
+                disabled={exportLoading}
+                className="mt-6 w-full rounded-lg bg-[#1e3a5f] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#16304f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 disabled:opacity-50"
+              >
+                {exportLoading ? 'Exporting...' : 'Download CSV'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -77,6 +77,22 @@ const TrackPage = lazyFromGlob(
   './pages/public/TrackPage.jsx',
   makePlaceholder('TrackPage')
 )
+const PrivacyPolicy = lazyFromGlob(
+  './pages/public/PrivacyPolicy.jsx',
+  makePlaceholder('PrivacyPolicy')
+)
+const TermsOfService = lazyFromGlob(
+  './pages/public/TermsOfService.jsx',
+  makePlaceholder('TermsOfService')
+)
+const RefundPolicy = lazyFromGlob(
+  './pages/public/RefundPolicy.jsx',
+  makePlaceholder('RefundPolicy')
+)
+const NotFoundPage = lazyFromGlob(
+  './pages/NotFoundPage.jsx',
+  makePlaceholder('NotFoundPage')
+)
 
 // Admin pages
 const LoginPage = lazyFromGlob(
@@ -135,8 +151,11 @@ export default function App() {
         {/* PUBLIC */}
         <Route element={<PublicLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="/apply" element={<ApplyPage />} />
-          <Route path="/track" element={<TrackPage />} />
+          <Route path="apply" element={<ApplyPage />} />
+          <Route path="track" element={<TrackPage />} />
+          <Route path="privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="terms" element={<TermsOfService />} />
+          <Route path="refund-policy" element={<RefundPolicy />} />
         </Route>
 
         {/* ADMIN AUTH */}
@@ -189,7 +208,7 @@ export default function App() {
         </Route>
 
         {/* FALLBACK */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
     <Toaster

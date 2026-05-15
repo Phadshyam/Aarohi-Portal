@@ -302,32 +302,13 @@ function ServiceCard({
 }) {
   const Icon = service.icon || Globe
   const domain = getDomain(service.url)
-  const [faviconFailed, setFaviconFailed] = useState(false)
-
-  useEffect(() => {
-    setFaviconFailed(false)
-  }, [service.url])
-
-  const faviconSrc =
-    domain && !faviconFailed
-      ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`
-      : null
 
   return (
     <div className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200/80">
-            {faviconSrc ? (
-              <img
-                src={faviconSrc}
-                alt=""
-                className="h-7 w-7 object-contain"
-                onError={() => setFaviconFailed(true)}
-              />
-            ) : (
-              <Icon className="h-5 w-5 text-[#1e3a5f]" />
-            )}
+            <Icon className="h-5 w-5 text-[#1e3a5f]" />
           </div>
 
           <div className="min-w-0">

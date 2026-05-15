@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Disallow admin routes
+Disallow: /admin/
+Disallow: /login
+
+Sitemap: https://portal.aarohimultiservices.in/sitemap.xml

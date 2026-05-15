@@ -6,6 +6,8 @@ import { ChevronDown, Menu, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { homeOpenServiceLocation } from '../../navigation/homeServiceIntent'
 import BrandLogo from '../common/BrandLogo'
+import { useBranding } from '../../context/BrandingContext'
+import { useServices } from '../../context/ServicesContext'
 
 const PRIMARY = '#1e3a5f'
 const PRIMARY_HOVER = '#16304f'
@@ -14,42 +16,12 @@ export default function Header() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [branding, setBranding] = useState({
-    business_name: '',
-    logo_icon_url: '',
-    logo_wordmark_url: '',
-    logo_icon_dark_url: '',
-    logo_wordmark_dark_url: '',
-  })
-
-  useEffect(() => {
-    const fetchBranding = async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_public_branding')
-        if (error) throw error
-  
-        setBranding({
-          business_name: data?.business_name || '',
-          logo_icon_url: data?.logo_icon_url || '',
-          logo_wordmark_url: data?.logo_wordmark_url || '',
-          logo_icon_dark_url: data?.logo_icon_dark_url || '',
-          logo_wordmark_dark_url: data?.logo_wordmark_dark_url || '',
-        })
-      } catch (e) {
-        console.error('Header branding error:', e)
-      }
-    }
-  
-    fetchBranding()
-  }, [])
+  const { branding } = useBranding()
+  const { services, loading: servicesLoading, error: servicesError } = useServices()
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false)
   const [desktopServicesOpen, setDesktopServicesOpen] = useState(false)
-
-  const [services, setServices] = useState([])
-  const [servicesLoading, setServicesLoading] = useState(true)
-  const [servicesError, setServicesError] = useState(false)
 
   const desktopServicesRef = useRef(null)
   const mobileMenuRef = useRef(null)
@@ -74,38 +46,6 @@ export default function Header() {
       leaveTimerRef.current = null
     }, 140)
   }, [clearLeaveTimer])
-
-  useEffect(() => {
-    let cancelled = false
-
-    const fetchServices = async () => {
-      setServicesLoading(true)
-      setServicesError(false)
-      try {
-        const { data, error } = await supabase
-          .from('services')
-          .select('id,name')
-          .eq('is_active', true)
-          .order('name', { ascending: true })
-
-        if (error) throw error
-        if (!cancelled) setServices(data || [])
-      } catch (err) {
-        console.error('Failed to fetch services:', err)
-        if (!cancelled) {
-          setServices([])
-          setServicesError(true)
-        }
-      } finally {
-        if (!cancelled) setServicesLoading(false)
-      }
-    }
-
-    fetchServices()
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     const onDocMouseDown = (event) => {

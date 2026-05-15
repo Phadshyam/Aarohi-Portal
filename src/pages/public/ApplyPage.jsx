@@ -4,11 +4,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { ChevronDown, FileText, Loader2 } from 'lucide-react'
 
-import { supabase } from '../../lib/supabase'
 import { supabasePublic } from '../../lib/supabasePublic'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { formatCurrency } from '../../utils/helpers'
+import { useServices } from '../../context/ServicesContext'
 
 const toErrorMessage = (err) => {
   if (!err) return 'Unknown error'
@@ -39,8 +39,7 @@ export default function ApplyPage() {
   const [searchParams] = useSearchParams()
   const preselectAppliedRef = useRef(false)
 
-  const [services, setServices] = useState([])
-  const [servicesLoading, setServicesLoading] = useState(true)
+  const { services, loading: servicesLoading } = useServices()
 
   const [submitting, setSubmitting] = useState(false)
   const [successApp, setSuccessApp] = useState(null)
@@ -72,31 +71,6 @@ export default function ApplyPage() {
     }
   }, [services, searchParams, setForm])
 
-  // Fetch services
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        setServicesLoading(true)
-
-        const { data, error } = await supabase
-          .from('services')
-          .select('id, name, cost, cost_text')
-          .eq('is_active', true)
-          .order('name', { ascending: true })
-
-        if (error) throw error
-        setServices(data || [])
-      } catch (err) {
-        console.error('Error fetching services:', err)
-        toast.error(toErrorMessage(err))
-      } finally {
-        setServicesLoading(false)
-      }
-    }
-
-    fetchServices()
-  }, [])
-
   const validate = () => {
     const next = {}
 
@@ -120,6 +94,10 @@ export default function ApplyPage() {
     setErrors({})
   }
 
+  // Client-side cooldown to prevent rapid re-submissions
+  const lastSubmitRef = useRef(0)
+  const SUBMIT_COOLDOWN_MS = 10_000 // 10 seconds between submissions
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitError('')
@@ -131,7 +109,33 @@ export default function ApplyPage() {
         return
       }
 
+      // Client-side cooldown check
+      const now = Date.now()
+      if (now - lastSubmitRef.current < SUBMIT_COOLDOWN_MS) {
+        toast.error('Please wait a few seconds before submitting again.')
+        return
+      }
+
       setSubmitting(true)
+
+      const phoneDigits = form.phone.replace(/\D/g, '').slice(0, 10)
+
+      // Server-side rate limit check (max 5 applications per phone per 24 hours)
+      const { data: allowed, error: rlError } = await supabasePublic.rpc(
+        'check_application_rate_limit',
+        { p_phone: phoneDigits }
+      )
+
+      if (rlError) {
+        // If the function doesn't exist yet, skip the check gracefully
+        if (!rlError.message?.includes('function') && !rlError.message?.includes('does not exist')) {
+          throw rlError
+        }
+      } else if (allowed === false) {
+        setSubmitError('You have reached the maximum number of applications for today. Please try again tomorrow.')
+        toast.error('Too many applications submitted. Please try again tomorrow.')
+        return
+      }
 
       const numericCost = Number(selectedService.cost)
       const costValue = Number.isFinite(numericCost) ? numericCost : null
@@ -145,7 +149,7 @@ export default function ApplyPage() {
 
       const insertPayload = {
         name: form.name.trim(),
-        phone: form.phone.replace(/\D/g, '').slice(0, 10),
+        phone: phoneDigits,
 
         service_id: selectedService.id,
         service_name: selectedService.name,
@@ -164,9 +168,10 @@ export default function ApplyPage() {
 
       if (insertError) throw insertError
 
-      // 2) Fetch latest application for this phone via RPC
-      const phoneDigits = insertPayload.phone
+      // Mark successful submission time for cooldown
+      lastSubmitRef.current = Date.now()
 
+      // 2) Fetch latest application for this phone via RPC
       const { data: tracked, error: trackError } = await supabasePublic.rpc(
         'track_application',
         { search_id: null, search_phone: phoneDigits }

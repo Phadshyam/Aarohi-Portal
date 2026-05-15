@@ -7,31 +7,10 @@ import { supabase } from '../../lib/supabase'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import { useAuth } from '../../context/AuthContext'
 import { SERVICE_CATEGORIES } from '../../utils/serviceCardConfig'
+import Toggle from '../../components/common/Toggle'
 
 const STATUS_OPTIONS = ['Submitted', 'In Process', 'On Hold']
 
-function Toggle({ checked, disabled, onChange }) {
-  return (
-    <button
-      type="button"
-      onClick={onChange}
-      disabled={disabled}
-      className={[
-        'relative inline-flex h-6 w-12 items-center rounded-full transition',
-        checked ? 'bg-emerald-500' : 'bg-slate-300',
-        disabled ? 'cursor-not-allowed opacity-50' : '',
-      ].join(' ')}
-      aria-label="Toggle"
-    >
-      <span
-        className={[
-          'inline-block h-5 w-5 rounded-full bg-white shadow transition',
-          checked ? 'translate-x-6' : 'translate-x-1',
-        ].join(' ')}
-      />
-    </button>
-  )
-}
 
 function CardShell({ title, children, disabled = false }) {
   return (

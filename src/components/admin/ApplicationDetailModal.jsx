@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import { formatCurrency, formatDate } from '../../utils/helpers'
+import Toggle from '../common/Toggle'
 
 const STATUS_OPTIONS = ['Submitted', 'In Process', 'On Hold', 'Completed', 'Rejected']
 const PAYMENT_OPTIONS = ['Pending', 'Paid']
@@ -24,27 +25,13 @@ function getAppCostDisplay(app) {
 function TogglePayment({ value, onChange }) {
   const isPaid = value === 'Paid'
   return (
-    <button
-      type="button"
-      onClick={() => onChange(isPaid ? 'Pending' : 'Paid')}
-      className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-      aria-label="Toggle payment status"
-    >
-      <span
-        className={[
-          'relative inline-flex h-6 w-11 items-center rounded-full transition',
-          isPaid ? 'bg-emerald-500' : 'bg-slate-300',
-        ].join(' ')}
-      >
-        <span
-          className={[
-            'inline-block h-5 w-5 rounded-full bg-white shadow transition',
-            isPaid ? 'translate-x-5' : 'translate-x-1',
-          ].join(' ')}
-        />
-      </span>
+    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+      <Toggle
+        checked={isPaid}
+        onChange={() => onChange(isPaid ? 'Pending' : 'Paid')}
+      />
       <span>{value}</span>
-    </button>
+    </div>
   )
 }
 
@@ -192,6 +179,19 @@ export default function ApplicationDetailModal({ open, application, onClose, onS
                   <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
                 </div>
               ))}
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs font-semibold text-slate-500">Source</p>
+                <div className="mt-2">
+                  <Badge 
+                    color={(application.source || 'offline').toLowerCase() === 'online' 
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                      : 'bg-slate-100 text-slate-700 border border-slate-200'}
+                  >
+                    {application.source || 'Offline'}
+                  </Badge>
+                </div>
+              </div>
 
               <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
                 <p className="text-xs font-semibold text-slate-500">Application Status</p>

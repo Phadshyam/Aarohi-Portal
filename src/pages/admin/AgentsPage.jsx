@@ -7,39 +7,8 @@ import { supabase } from '../../lib/supabase'
 import Badge from '../../components/ui/Badge'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import { useAuth } from '../../context/AuthContext'
+import ModalShell from '../../components/common/ModalShell'
 
-function ModalShell({ open, title, onClose, children, maxWidthClass = 'max-w-xl' }) {
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-[80]">
-      <div className="absolute inset-0 bg-black/45" onClick={onClose} aria-hidden="true" />
-      <div
-        className={[
-          'absolute left-1/2 top-1/2 w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-2xl',
-          'border border-slate-200 bg-white shadow-[0_22px_60px_rgba(2,6,23,0.25)]',
-          maxWidthClass,
-        ].join(' ')}
-      >
-        <div className="relative px-8 pb-6 pt-7">
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          <h3 className="text-center text-2xl font-extrabold text-slate-900">{title}</h3>
-          <div className="mx-auto mt-4 h-1 w-full max-w-lg rounded bg-slate-200" />
-
-          {children}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function isValidEmail(email) {
   const v = String(email || '').trim()

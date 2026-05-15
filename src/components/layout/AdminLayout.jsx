@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
-import { supabase } from '../../lib/supabase'
+import { useBranding } from '../../context/BrandingContext'
 import BrandLogo from '../common/BrandLogo'
 
 const SIDEBAR_WIDTH_CLASS = 'w-56' 
@@ -54,14 +54,7 @@ export default function AdminLayout() {
 
   const [search, setSearch] = useState('')
 
-  // NEW: Branding (icon + wordmark)
-  const [branding, setBranding] = useState({
-    business_name: 'Aarohi Multiservices',
-    logo_icon_url: '',
-    logo_wordmark_url: '',
-    logo_icon_dark_url: '',
-    logo_wordmark_dark_url: '',
-  })
+  const { branding } = useBranding()
   const [iconFailed, setIconFailed] = useState(false)
   const [wordmarkFailed, setWordmarkFailed] = useState(false)
 
@@ -90,28 +83,6 @@ useEffect(() => {
   return () => mq.removeEventListener?.('change', update)
 }, [])
 
-  // Fetch branding for admin portal header/sidebar
-  useEffect(() => {
-    const fetchBranding = async () => {
-      try {
-        // Using public-safe RPC works both before/after login and avoids RLS hassles.
-        const { data, error } = await supabase.rpc('get_public_branding')
-        if (error) throw error
-
-        setBranding({
-          business_name: data?.business_name || '',
-          logo_icon_url: data?.logo_icon_url || '',
-          logo_wordmark_url: data?.logo_wordmark_url || '',
-          logo_icon_dark_url: data?.logo_icon_dark_url || '',
-          logo_wordmark_dark_url: data?.logo_wordmark_dark_url || '',
-        })
-      } catch (e) {
-        console.error('Admin branding fetch error:', e)
-      }
-    }
-    fetchBranding()
-  }, [])
-  
   const wordmarkSrc = (
     isMobile
       ? branding.logo_wordmark_dark_url

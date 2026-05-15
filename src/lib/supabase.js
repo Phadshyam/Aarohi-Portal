@@ -27,7 +27,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // So user stays logged in after refresh
     persistSession: true,
     // Auto refresh token before it expires
-    autoRefreshToken: false,
+    autoRefreshToken: true,
     // Detect session from URL (for OTP links)
     detectSessionInUrl: true,
   }
