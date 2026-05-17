@@ -5,4 +5,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /login
 
-Sitemap: https://portal.aarohimultiservices.in/sitemap.xml
+Sitemap: https://www.aarohimultiservices.in/sitemap.xml
