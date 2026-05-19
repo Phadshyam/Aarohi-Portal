@@ -163,7 +163,12 @@ export default function TrackPage() {
                               <span className="font-semibold text-slate-700">
                                 Amount:
                               </span>{' '}
-                              {formatCurrency(app.cost)}
+                              {(app.paid_amount !== null && app.paid_amount !== undefined) 
+                                ? formatCurrency(app.paid_amount) 
+                                : (app.cost !== null && app.cost !== undefined)
+                                  ? formatCurrency(app.cost)
+                                  : '₹0'
+                              }
                             </p>
                             <p>
                               <span className="font-semibold text-slate-700">
