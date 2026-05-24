@@ -3,11 +3,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import CountUp from 'react-countup'
 import toast from 'react-hot-toast'
-import { Search } from 'lucide-react'
+import { Search, FileText, Layers, Headphones, Zap, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { HOME_OPEN_SERVICE_ID } from '../../navigation/homeServiceIntent'
 import Footer from '../../components/layout/Footer'
 import ServiceDetailsModal from '../../components/public/ServiceDetailsModal'
+import WebsiteDevelopmentSection from '../../components/public/WebsiteDevelopmentSection'
+import TestimonialsSection from '../../components/public/TestimonialsSection'
+import FaqSection from '../../components/public/FaqSection'
 import {
   cx,
   ServiceCardSkeleton,
@@ -172,9 +175,30 @@ export default function HomePage() {
   const [selectedService, setSelectedService] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
 
-  // Services UI state
+  // mobile view state
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(max-width: 639px)').matches
+  })
+  const [showAllServices, setShowAllServices] = useState(false)
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 639px)')
+    const handler = (e) => setIsMobile(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+
   const [activeTab, setActiveTab] = useState('all')
   const [serviceQuery, setServiceQuery] = useState('')
+
+  // Reset mobile view-more when filters change
+  useEffect(() => {
+    setShowAllServices(false)
+  }, [activeTab, serviceQuery])
+
+
+  // Services UI state
   const [fade, setFade] = useState(false)
 
   const [applicationCount, setApplicationCount] = useState(0)
@@ -324,6 +348,7 @@ export default function HomePage() {
 
     return [
       {
+        icon: FileText,
         label: 'Applications processed',
         value: (
           <CountUp
@@ -335,6 +360,7 @@ export default function HomePage() {
         ),
       },
       {
+        icon: Layers,
         label: 'Active services',
         value: (
           <CountUp
@@ -344,8 +370,8 @@ export default function HomePage() {
           />
         ),
       },
-      { label: 'Customer support', value: 'Dedicated' },
-      { label: 'Fast processing', value: 'Priority' },
+      { icon: Headphones, label: 'Customer support', value: 'Dedicated' },
+      { icon: Zap, label: 'Fast processing', value: 'Priority' },
     ]
   }, [services?.length, applicationCount])
 
@@ -519,7 +545,10 @@ export default function HomePage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:justify-end lg:gap-3">
                 <div className="relative w-full sm:w-[360px]">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <label htmlFor="serviceQuery" className="sr-only">Search services</label>
                   <input
+                    id="serviceQuery"
+                    name="serviceQuery"
                     value={serviceQuery}
                     onChange={(e) => setServiceQuery(e.target.value)}
                     placeholder="Search services..."
@@ -539,91 +568,174 @@ export default function HomePage() {
           </div>
 
           {/* Grid */}
-          <div className={cx('mt-10 transition-opacity duration-300 ease-out', fade ? 'opacity-60' : 'opacity-100')}>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {loading ? (
-                Array.from({ length: 8 }).map((_, idx) => <ServiceCardSkeleton key={idx} />)
-              ) : filtered.length === 0 ? (
-                <div className="col-span-full rounded-2xl border border-slate-200/90 bg-white p-10 text-center shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
-                  <p className="text-base font-extrabold text-slate-900">No services found</p>
-                  <p className="mt-2 text-sm font-medium text-slate-600">
-                    Try a different search keyword or choose another category.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setServiceQuery('')
-                      setActiveTab('all')
-                    }}
-                    className="mt-6 rounded-xl bg-[#1e3a5f] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(30,58,95,0.35)] transition duration-200 hover:bg-[#16304f]"
-                  >
-                    Clear filters
-                  </button>
+          {(() => {
+            const displayedServices = isMobile && !showAllServices ? filtered.slice(0, 6) : filtered
+            return (
+              <>
+                <div className={cx('mt-10 transition-opacity duration-300 ease-out', fade ? 'opacity-60' : 'opacity-100')}>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+                    {loading ? (
+                      Array.from({ length: 8 }).map((_, idx) => <ServiceCardSkeleton key={idx} />)
+                    ) : filtered.length === 0 ? (
+                      <div className="col-span-full rounded-2xl border border-slate-200/90 bg-white p-10 text-center shadow-[0_12px_36px_rgba(15,23,42,0.08)]">
+                        <p className="text-base font-extrabold text-slate-900">No services found</p>
+                        <p className="mt-2 text-sm font-medium text-slate-600">
+                          Try a different search keyword or choose another category.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setServiceQuery('')
+                            setActiveTab('all')
+                          }}
+                          className="mt-6 rounded-xl bg-[#1e3a5f] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(30,58,95,0.35)] transition duration-200 hover:bg-[#16304f]"
+                        >
+                          Clear filters
+                        </button>
+                      </div>
+                    ) : (
+                      displayedServices.map((service) => {
+                        const Icon = service._Icon
+                        return isMobile ? (
+                          /* ── Mobile compact card ── */
+                          <button
+                            key={service.id}
+                            id={`home-service-${service.id}`}
+                            type="button"
+                            onClick={() => openService(service)}
+                            className={cx(
+                              'group flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-3.5 text-left',
+                              'shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition duration-200 ease-out',
+                              'hover:border-slate-300 hover:shadow-[0_4px_16px_rgba(15,23,42,0.10)]',
+                              'active:scale-[0.99] active:bg-slate-50/80',
+                              'focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20'
+                            )}
+                          >
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1e3a5f]/5 to-[#1e3a5f]/10 ring-1 ring-[#1e3a5f]/10">
+                              <Icon className="h-4.5 w-4.5 text-[#1e3a5f]" />
+                            </div>
+                            <span className="min-w-0 flex-1 truncate whitespace-nowrap text-[13px] font-semibold text-slate-800" title={service.name}>
+                              {service.name}
+                            </span>
+                            {service._badges?.[0] && (
+                              <span
+                                className={cx(
+                                  'shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold leading-tight',
+                                  BADGE_STYLES[service._badges[0]] || 'border border-slate-200/80 bg-slate-50 text-slate-600'
+                                )}
+                              >
+                                {service._badges[0]}
+                              </span>
+                            )}
+                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-slate-500" />
+                          </button>
+                        ) : (
+                          /* ── Desktop/tablet full card ── */
+                          <button
+                            key={service.id}
+                            id={`home-service-${service.id}`}
+                            type="button"
+                            onClick={() => openService(service)}
+                            className={cx(
+                              'group h-full rounded-2xl border border-slate-200/90 bg-white p-5 text-left',
+                              'shadow-[0_8px_28px_rgba(15,23,42,0.07)] transition duration-300 ease-out',
+                              'hover:-translate-y-1 hover:border-slate-300/90 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)]',
+                              'focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25 active:translate-y-0'
+                            )}
+                          >
+                            <div className="flex h-full flex-col">
+                              <div className="flex items-start gap-4">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-50 to-white ring-1 ring-slate-200/90 transition group-hover:ring-[#1e3a5f]/20">
+                                  <Icon className="h-5 w-5 text-[#1e3a5f]" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <h3 className="text-[15px] font-extrabold leading-snug tracking-tight text-slate-900 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
+                                    {service.name}
+                                  </h3>
+                                  <p className="mt-1.5 text-sm font-medium text-slate-600 line-clamp-2">
+                                    {service._short}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="mt-4 flex min-h-[28px] flex-wrap gap-2">
+                                {service._badges?.map((b) => (
+                                  <span
+                                    key={b}
+                                    className={cx(
+                                      'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-extrabold',
+                                      BADGE_STYLES[b] || 'border border-slate-200/80 bg-slate-50 text-slate-700'
+                                    )}
+                                  >
+                                    {b}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="mt-auto pt-4">
+                                <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                                <p className="mt-3 text-xs font-semibold text-slate-400">Tap to view full details</p>
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })
+                    )}
+                  </div>
                 </div>
-              ) : (
-                filtered.map((service) => {
-                  const Icon = service._Icon
-                  return (
+
+                {/* View More / Show Less button — mobile only */}
+                {!loading && isMobile && filtered.length > 6 && (
+                  <div className="mt-5 flex justify-center">
                     <button
-                      key={service.id}
-                      id={`home-service-${service.id}`}
                       type="button"
-                      onClick={() => openService(service)}
+                      onClick={() => {
+                        if (showAllServices) {
+                          setShowAllServices(false)
+                          const el = document.getElementById('services')
+                          if (el) {
+                            window.setTimeout(() => {
+                              el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            }, 50)
+                          }
+                        } else {
+                          setShowAllServices(true)
+                        }
+                      }}
                       className={cx(
-                        'group h-full rounded-2xl border border-slate-200/90 bg-white p-5 text-left',
-                        'shadow-[0_8px_28px_rgba(15,23,42,0.07)] transition duration-300 ease-out',
-                        'hover:-translate-y-1 hover:border-slate-300/90 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)]',
-                        'focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25 active:translate-y-0'
+                        'inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition duration-200',
+                        'border border-[#1e3a5f]/20 bg-[#1e3a5f]/5 text-[#1e3a5f]',
+                        'hover:bg-[#1e3a5f]/10 hover:border-[#1e3a5f]/30',
+                        'active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20'
                       )}
                     >
-                      <div className="flex h-full flex-col">
-                        <div className="flex items-start gap-4">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-50 to-white ring-1 ring-slate-200/90 transition group-hover:ring-[#1e3a5f]/20">
-                            <Icon className="h-5 w-5 text-[#1e3a5f]" />
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <h3 className="text-[15px] font-extrabold leading-snug tracking-tight text-slate-900 [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
-                              {service.name}
-                            </h3>
-                            <p className="mt-1.5 text-sm font-medium text-slate-600 line-clamp-2">
-                              {service._short}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 flex min-h-[28px] flex-wrap gap-2">
-                          {service._badges?.map((b) => (
-                            <span
-                              key={b}
-                              className={cx(
-                                'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-extrabold',
-                                BADGE_STYLES[b] ||
-                                'border border-slate-200/80 bg-slate-50 text-slate-700'
-                              )}
-                            >
-                              {b}
-                            </span>
-                          ))}
-                        </div>
-
-                        <div className="mt-auto pt-4">
-                          <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                          <p className="mt-3 text-xs font-semibold text-slate-400">Tap to view full details</p>
-                        </div>
-                      </div>
+                      {showAllServices ? (
+                        <>
+                          <ChevronUp className="h-4 w-4" />
+                          Show Less
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4" />
+                          View More Services ({filtered.length - 6} more)
+                        </>
+                      )}
                     </button>
-                  )
-                })
-              )}
-            </div>
-          </div>
+                  </div>
+                )}
+              </>
+            )
+          })()}
         </div>
       </section>
+
+      <WebsiteDevelopmentSection branding={branding} phone={phone} />
 
       <TrackSection />
 
       <WhyChooseUsSection />
+
+      <TestimonialsSection />
+
+      <FaqSection />
 
       <ContactSection branding={branding} phone={phone} />
 

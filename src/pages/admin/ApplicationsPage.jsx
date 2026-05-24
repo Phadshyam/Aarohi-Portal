@@ -297,7 +297,10 @@ export default function ApplicationsPage() {
       <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)] sm:p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="flex flex-wrap items-center gap-2">
+            <label htmlFor="statusFilter" className="sr-only">Status</label>
             <select
+              id="statusFilter"
+              name="statusFilter"
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value)
@@ -312,7 +315,10 @@ export default function ApplicationsPage() {
               ))}
             </select>
 
+            <label htmlFor="serviceFilter" className="sr-only">Service</label>
             <select
+              id="serviceFilter"
+              name="serviceFilter"
               value={serviceFilter}
               onChange={(e) => {
                 setServiceFilter(e.target.value)
@@ -328,7 +334,10 @@ export default function ApplicationsPage() {
               ))}
             </select>
 
+            <label htmlFor="sourceFilter" className="sr-only">Source</label>
             <select
+              id="sourceFilter"
+              name="sourceFilter"
               value={sourceFilter}
               onChange={(e) => {
                 setSourceFilter(e.target.value)
@@ -389,7 +398,10 @@ export default function ApplicationsPage() {
 
           <div className="relative w-full min-w-0 xl:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <label htmlFor="searchApps" className="sr-only">Search applications</label>
             <input
+              id="searchApps"
+              name="searchApps"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search by name, phone, or application ID…"
@@ -600,8 +612,10 @@ export default function ApplicationsPage() {
 
             <div className="mt-6 space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">From Date</label>
+                <label htmlFor="exportStart" className="mb-1.5 block text-sm font-semibold text-slate-700">From Date</label>
                 <input
+                  id="exportStart"
+                  name="exportStart"
                   type="date"
                   value={exportStart}
                   onChange={(e) => setExportStart(e.target.value)}
@@ -609,8 +623,10 @@ export default function ApplicationsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">To Date</label>
+                <label htmlFor="exportEnd" className="mb-1.5 block text-sm font-semibold text-slate-700">To Date</label>
                 <input
+                  id="exportEnd"
+                  name="exportEnd"
                   type="date"
                   value={exportEnd}
                   onChange={(e) => setExportEnd(e.target.value)}

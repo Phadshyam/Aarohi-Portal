@@ -41,6 +41,11 @@ const Header = lazyFromGlob(
   makePlaceholder('Header')
 )
 
+const FloatingActions = lazyFromGlob(
+  './components/public/FloatingActions.jsx',
+  () => null
+)
+
 const ProtectedRoute = lazyFromGlob(
   './components/shared/ProtectedRoute.jsx',
   ({ children }) => children ?? <Outlet />
@@ -131,6 +136,10 @@ const SettingsPage = lazyFromGlob(
   './pages/admin/SettingsPage.jsx',
   makePlaceholder('SettingsPage')
 )
+const WebsiteLeadsPage = lazyFromGlob(
+  './pages/admin/WebsiteLeadsPage.jsx',
+  makePlaceholder('WebsiteLeadsPage')
+)
 
 function PublicLayout() {
   return (
@@ -139,6 +148,7 @@ function PublicLayout() {
       <main className="w-full">
         <Outlet />
       </main>
+      <FloatingActions />
     </div>
   )
 }
@@ -190,6 +200,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']} redirectTo="/admin/dashboard">
                 <ServicePortalsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="website-leads"
+            element={
+              <ProtectedRoute allowedRoles={['admin']} redirectTo="/admin/dashboard">
+                <WebsiteLeadsPage />
               </ProtectedRoute>
             }
           />

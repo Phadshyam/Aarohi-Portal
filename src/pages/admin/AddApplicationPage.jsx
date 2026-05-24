@@ -7,18 +7,6 @@ import { ChevronDown, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
-import { formatCurrency } from '../../utils/helpers'
-
-function getServiceCostDisplay(service) {
-  const t = String(service?.cost_text || '').trim()
-  if (t) return t
-
-  const n = Number(service?.cost)
-  if (Number.isFinite(n)) return formatCurrency(n)
-
-  return '—'
-}
-
 export default function AddApplicationPage() {
   const navigate = useNavigate()
 
@@ -29,6 +17,7 @@ export default function AddApplicationPage() {
     name: '',
     phone: '',
     serviceId: '',
+    amount: '',
   })
   const [errors, setErrors] = useState({})
   const [creating, setCreating] = useState(false)
@@ -73,14 +62,22 @@ export default function AddApplicationPage() {
     if (!form.phone.trim()) next.phone = 'Phone is required'
     else if (phoneDigits.length !== 10) next.phone = 'Phone must be exactly 10 digits'
 
-    if (!form.serviceId) next.serviceId = 'Please select a service'
+    if (!form.serviceId) {
+      next.serviceId = 'Please select a service'
+    } else {
+      if (form.amount === '') {
+        next.amount = 'Amount is required'
+      } else if (Number(form.amount) < 0 || isNaN(Number(form.amount))) {
+        next.amount = 'Please enter a valid positive amount'
+      }
+    }
 
     setErrors(next)
     return Object.keys(next).length === 0
   }
 
   const resetForm = () => {
-    setForm({ name: '', phone: '', serviceId: '' })
+    setForm({ name: '', phone: '', serviceId: '', amount: '' })
     setErrors({})
   }
 
@@ -92,17 +89,9 @@ export default function AddApplicationPage() {
     try {
       setCreating(true)
 
-      // numeric cost if available, else null (never default to 0)
-      const numericCost = Number(selectedService.cost)
-      const costValue = Number.isFinite(numericCost) ? numericCost : null
-
-      // snapshot cost_text if set, else snapshot numeric cost as text, else null
-      const serviceCostText = String(selectedService.cost_text || '').trim()
-      const costTextSnapshot = serviceCostText
-        ? serviceCostText
-        : costValue !== null
-          ? String(costValue)
-          : null
+      const numericCost = Number(form.amount)
+      const costValue = form.amount !== '' && Number.isFinite(numericCost) ? numericCost : null
+      const costTextSnapshot = costValue !== null ? String(costValue) : null
 
       const { data, error } = await supabase
         .from('applications')
@@ -133,8 +122,6 @@ export default function AddApplicationPage() {
     }
   }
 
-  const costText = selectedService ? getServiceCostDisplay(selectedService) : '—'
-
   return (
     <div>
       <h1 className="text-3xl font-extrabold text-slate-900">Add New Application</h1>
@@ -144,6 +131,8 @@ export default function AddApplicationPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
               label="Name"
+              id="name"
+              name="name"
               value={form.name}
               onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
               placeholder="Enter your name"
@@ -152,6 +141,8 @@ export default function AddApplicationPage() {
 
             <Input
               label="Phone"
+              id="phone"
+              name="phone"
               type="tel"
               value={form.phone}
               onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
@@ -162,14 +153,29 @@ export default function AddApplicationPage() {
 
             {/* Service */}
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label htmlFor="serviceId" className="mb-2 block text-sm font-semibold text-slate-700">
                 Service
               </label>
 
               <div className="relative">
                 <select
+                  id="serviceId"
+                  name="serviceId"
                   value={form.serviceId}
-                  onChange={(e) => setForm((p) => ({ ...p, serviceId: e.target.value }))}
+                  onChange={(e) => {
+                    const newServiceId = e.target.value
+                    let newAmount = ''
+                    if (newServiceId) {
+                      const s = services.find((srv) => srv.id === newServiceId)
+                      if (s && s.cost !== null && s.cost !== undefined) {
+                        const n = Number(s.cost)
+                        if (Number.isFinite(n) && n >= 0) {
+                          newAmount = String(n)
+                        }
+                      }
+                    }
+                    setForm((p) => ({ ...p, serviceId: newServiceId, amount: newAmount }))
+                  }}
                   disabled={servicesLoading || creating}
                   className={[
                     'h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm',
@@ -198,15 +204,22 @@ export default function AddApplicationPage() {
               ) : null}
             </div>
 
-            {/* Cost */}
-            <div>
-              <p className="text-sm font-semibold text-slate-400">Auto-fetched</p>
-              <input
-                value={costText}
-                readOnly
-                className="mt-2 h-11 w-72 rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 shadow-sm focus:outline-none"
-              />
-            </div>
+            <Input
+              label="Application Amount"
+              id="amount"
+              name="amount"
+              type="text"
+              inputMode="decimal"
+              value={form.amount}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                  setForm((p) => ({ ...p, amount: val }));
+                }
+              }}
+              placeholder="Enter amount"
+              error={errors.amount}
+            />
 
             <div className="pt-4">
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">

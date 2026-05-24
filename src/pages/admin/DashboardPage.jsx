@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   Clock3,
   Layers3,
+  Globe,
+  IndianRupee,
 } from 'lucide-react'
 
 import { supabase } from '../../lib/supabase'
@@ -66,6 +68,7 @@ function getAppCostDisplay(app) {
 export default function DashboardPage() {
   const [statsLoading, setStatsLoading] = useState(true)
   const [stats, setStats] = useState(null)
+  const [extraStats, setExtraStats] = useState({ leads: 0, revenue: 0 })
 
   const [appsLoading, setAppsLoading] = useState(true)
   const [applications, setApplications] = useState([])
@@ -92,9 +95,19 @@ export default function DashboardPage() {
   const fetchStats = async () => {
     try {
       setStatsLoading(true)
-      const { data, error } = await supabase.rpc('get_dashboard_stats')
-      if (error) throw error
-      setStats(data || null)
+      const [{ data: statsData, error: statsError }, { count: leadsCount }, { data: revData }] = await Promise.all([
+        supabase.rpc('get_dashboard_stats'),
+        supabase.from('website_inquiries').select('*', { count: 'exact', head: true }),
+        supabase.rpc('get_revenue_stats')
+      ])
+      
+      if (statsError) throw statsError
+      
+      setStats(statsData || null)
+      setExtraStats({
+        leads: leadsCount || 0,
+        revenue: revData?.totalRevenue || 0
+      })
     } catch (err) {
       console.error('Stats error:', err)
       toast.error(err.message || 'Failed to load dashboard stats')
@@ -164,34 +177,41 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Dashboard overview</h1>
 
-        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           <StatCard
-            title="Total applications"
+            title="Total Applications"
             value={statsLoading ? '—' : stats?.total_apps}
             icon={Layers3}
             loading={statsLoading}
             color="indigo"
           />
           <StatCard
-            title="In process"
-            value={statsLoading ? '—' : stats?.in_process}
+            title="Pending Applications"
+            value={statsLoading ? '—' : (stats?.in_process || 0) + (stats?.pending_today || 0)}
             icon={Clock3}
             loading={statsLoading}
             color="amber"
           />
           <StatCard
-            title="Completed"
+            title="Completed Applications"
             value={statsLoading ? '—' : stats?.completed}
             icon={CheckCircle2}
             loading={statsLoading}
             color="emerald"
           />
           <StatCard
-            title="Pending today"
-            value={statsLoading ? '—' : stats?.pending_today}
-            icon={CalendarDays}
+            title="Website Leads"
+            value={statsLoading ? '—' : extraStats.leads}
+            icon={Globe}
             loading={statsLoading}
             color="blue"
+          />
+          <StatCard
+            title="Total Revenue"
+            value={statsLoading ? '—' : formatCurrency(extraStats.revenue)}
+            icon={IndianRupee}
+            loading={statsLoading}
+            color="indigo"
           />
         </div>
       </div>

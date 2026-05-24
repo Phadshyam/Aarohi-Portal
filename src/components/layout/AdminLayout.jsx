@@ -21,6 +21,7 @@ import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
 import { useBranding } from '../../context/BrandingContext'
 import BrandLogo from '../common/BrandLogo'
+import GlobalSearch from '../admin/GlobalSearch'
 
 const SIDEBAR_WIDTH_CLASS = 'w-56' 
 
@@ -31,6 +32,7 @@ const ALL_NAV_ITEMS = [
   { label: 'Service Portals', to: '/admin/service-portals', icon: Globe, adminOnly: true },
   { label: 'Revenue', to: '/admin/revenue', icon: TrendingUp, adminOnly: true },
   { label: 'Services', to: '/admin/services', icon: Briefcase },
+  { label: 'Website Leads', to: '/admin/website-leads', icon: Globe, adminOnly: true },
   { label: 'Agents', to: '/admin/agents', icon: Users, adminOnly: true },
   { label: 'Settings', to: '/admin/settings', icon: Settings },
 ]
@@ -51,8 +53,6 @@ export default function AdminLayout() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-
-  const [search, setSearch] = useState('')
 
   const { branding } = useBranding()
   const [iconFailed, setIconFailed] = useState(false)
@@ -121,13 +121,6 @@ useEffect(() => {
     mq.addEventListener?.('change', onChange)
     return () => mq.removeEventListener?.('change', onChange)
   }, [])
-
-  const handleSubmitSearch = (e) => {
-    e.preventDefault()
-    const q = search.trim()
-    if (!q) return
-    navigate(`/admin/applications?q=${encodeURIComponent(q)}`)
-  }
 
   const handleLogout = async () => {
     try {
@@ -274,17 +267,7 @@ useEffect(() => {
               <BrandBlock />
             </button>
 
-            <form onSubmit={handleSubmitSearch} className="ml-2 hidden min-w-0 flex-1 lg:block lg:max-w-xl xl:max-w-2xl">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by Name, Phone or Application ID..."
-                  className="h-10 w-full rounded-lg border border-slate-200/90 bg-slate-50/90 pl-9 pr-3 text-sm font-normal text-slate-800 shadow-inner transition-all duration-200 placeholder:text-slate-400 focus:border-[#1e3a5f] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-                />
-              </div>
-            </form>
+            <GlobalSearch className="ml-2 hidden min-w-0 flex-1 lg:block lg:max-w-xl xl:max-w-2xl" />
           </div>
 
           {/* Right */}
@@ -349,17 +332,7 @@ useEffect(() => {
 
         {/* Mobile search row */}
         <div className="border-t border-slate-100 bg-white px-4 py-3 lg:hidden">
-          <form onSubmit={handleSubmitSearch}>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by Name, Phone or Application ID..."
-                className="h-10 w-full rounded-lg border border-slate-200/90 bg-slate-50/90 pl-9 pr-3 text-sm font-normal text-slate-800 shadow-inner transition-all duration-200 placeholder:text-slate-400 focus:border-[#1e3a5f] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
-              />
-            </div>
-          </form>
+          <GlobalSearch />
         </div>
       </header>
 

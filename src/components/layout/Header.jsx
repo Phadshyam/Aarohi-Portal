@@ -253,6 +253,10 @@ export default function Header() {
               {desktopServicesPanel}
             </div>
 
+            <button type="button" onClick={() => scrollToSection('website-development')} className={navLinkClass}>
+              Website Development
+            </button>
+
             <button type="button" onClick={() => scrollToSection('about')} className={navLinkClass}>
               About
             </button>
@@ -372,6 +376,13 @@ export default function Header() {
                 </div>
               </div>
 
+              <button
+                type="button"
+                onClick={() => scrollToSection('website-development')}
+                className="flex w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-slate-800 transition-colors duration-200 hover:bg-slate-50 hover:text-[#1e3a5f]"
+              >
+                Website Development
+              </button>
               <button
                 type="button"
                 onClick={() => scrollToSection('about')}

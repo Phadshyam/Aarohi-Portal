@@ -24,10 +24,12 @@ export default function DateRangePopover({ open, onClose, startDate, endDate, se
 
       <div className="mt-3 space-y-3">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label htmlFor="popoverFromDate" className="mb-1 block text-xs font-medium text-slate-600">
             From
           </label>
           <input
+            id="popoverFromDate"
+            name="popoverFromDate"
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -35,10 +37,12 @@ export default function DateRangePopover({ open, onClose, startDate, endDate, se
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label htmlFor="popoverToDate" className="mb-1 block text-xs font-medium text-slate-600">
             To
           </label>
           <input
+            id="popoverToDate"
+            name="popoverToDate"
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}

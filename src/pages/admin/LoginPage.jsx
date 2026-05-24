@@ -483,8 +483,10 @@ export default function LoginPage() {
 
           <div className="mt-8 space-y-5">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">User ID</label>
+              <label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-700">User ID</label>
               <input
+                id="email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -496,9 +498,11 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Password</label>
+              <label htmlFor="password" className="mb-2 block text-sm font-semibold text-slate-700">Password</label>
               <div className="relative">
                 <input
+                  id="password"
+                  name="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading || otpSent}
@@ -539,12 +543,14 @@ export default function LoginPage() {
 
             {otpSent ? (
               <div className="pt-2">
-                <label className="mb-2 block text-sm font-semibold text-slate-700">OTP</label>
+                <label htmlFor="otp-0" className="mb-2 block text-sm font-semibold text-slate-700">OTP</label>
 
                 <div className="flex items-center justify-between gap-2" onPaste={handleOtpPaste}>
                   {otpBoxes.map((val, idx) => (
                     <input
                       key={idx}
+                      id={`otp-${idx}`}
+                      name={`otp-${idx}`}
                       ref={(el) => (otpRefs.current[idx] = el)}
                       value={val}
                       onChange={(e) => handleOtpChange(idx, e.target.value)}

@@ -360,10 +360,12 @@ export default function AgentsPage() {
           {!addInfo ? (
             <>
               <div>
-                <label className="mb-2 block text-sm font-extrabold text-slate-900">
+                <label htmlFor="addAgentName" className="mb-2 block text-sm font-extrabold text-slate-900">
                   Full Name
                 </label>
                 <input
+                  id="addAgentName"
+                  name="addAgentName"
                   value={addForm.name}
                   onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -373,10 +375,12 @@ export default function AgentsPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-extrabold text-slate-900">
+                <label htmlFor="addAgentEmail" className="mb-2 block text-sm font-extrabold text-slate-900">
                   Email
                 </label>
                 <input
+                  id="addAgentEmail"
+                  name="addAgentEmail"
                   value={addForm.email}
                   onChange={(e) => setAddForm((p) => ({ ...p, email: e.target.value }))}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -386,10 +390,12 @@ export default function AgentsPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-extrabold text-slate-900">
+                <label htmlFor="addAgentPhone" className="mb-2 block text-sm font-extrabold text-slate-900">
                   Phone
                 </label>
                 <input
+                  id="addAgentPhone"
+                  name="addAgentPhone"
                   value={addForm.phone}
                   onChange={(e) => setAddForm((p) => ({ ...p, phone: e.target.value }))}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -400,10 +406,12 @@ export default function AgentsPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-extrabold text-slate-900">
+                <label htmlFor="addAgentPassword" className="mb-2 block text-sm font-extrabold text-slate-900">
                   Password
                 </label>
                 <input
+                  id="addAgentPassword"
+                  name="addAgentPassword"
                   value={addForm.password}
                   onChange={(e) => setAddForm((p) => ({ ...p, password: e.target.value }))}
                   type="password"
@@ -495,10 +503,12 @@ export default function AgentsPage() {
       >
         <div className="mx-auto mt-6 max-w-lg space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-extrabold text-slate-900">
+            <label htmlFor="editAgentName" className="mb-2 block text-sm font-extrabold text-slate-900">
               Name
             </label>
             <input
+              id="editAgentName"
+              name="editAgentName"
               value={editForm.name}
               onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
               className="h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -508,10 +518,12 @@ export default function AgentsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-extrabold text-slate-900">
+            <label htmlFor="editAgentPhone" className="mb-2 block text-sm font-extrabold text-slate-900">
               Phone
             </label>
             <input
+              id="editAgentPhone"
+              name="editAgentPhone"
               value={editForm.phone}
               onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))}
               className="h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"

@@ -226,10 +226,12 @@ export default function SettingsPage() {
       <CardShell title="Business Information" disabled={!isAdmin}>
         <div className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-extrabold text-slate-900">
+            <label htmlFor="businessName" className="mb-2 block text-sm font-extrabold text-slate-900">
               Business Name
             </label>
             <input
+              id="businessName"
+              name="businessName"
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
               className="h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-[0_10px_25px_rgba(2,6,23,0.10)] focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 disabled:bg-slate-50 disabled:text-slate-500"
@@ -238,10 +240,12 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-extrabold text-slate-900">
+            <label htmlFor="contact" className="mb-2 block text-sm font-extrabold text-slate-900">
               Contact Number
             </label>
             <input
+              id="contact"
+              name="contact"
               type="tel"
               value={contact}
               onChange={(e) => setContact(e.target.value)}
@@ -251,10 +255,12 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-extrabold text-slate-900">
+            <label htmlFor="email" className="mb-2 block text-sm font-extrabold text-slate-900">
               Email
             </label>
             <input
+              id="email"
+              name="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -269,10 +275,12 @@ export default function SettingsPage() {
 
             <div className="mt-4 space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-extrabold text-slate-900">
+                <label htmlFor="logoIconUrl" className="mb-2 block text-sm font-extrabold text-slate-900">
                   Logo Icon URL
                 </label>
                 <input
+                  id="logoIconUrl"
+                  name="logoIconUrl"
                   value={logoIconUrl}
                   onChange={(e) => setLogoIconUrl(e.target.value)}
                   placeholder="https://.../logo-icon.png"
@@ -282,10 +290,12 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-extrabold text-slate-900">
+                <label htmlFor="logoWordmarkUrl" className="mb-2 block text-sm font-extrabold text-slate-900">
                   Logo Wordmark URL
                 </label>
                 <input
+                  id="logoWordmarkUrl"
+                  name="logoWordmarkUrl"
                   value={logoWordmarkUrl}
                   onChange={(e) => setLogoWordmarkUrl(e.target.value)}
                   placeholder="https://.../logo-wordmark.png"
@@ -319,12 +329,14 @@ export default function SettingsPage() {
         <CardShell title="System Preferences" disabled={!isAdmin}>
           <div className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">
+              <label htmlFor="defaultStatus" className="mb-2 block text-sm font-extrabold text-slate-900">
                 Default Application Status
               </label>
 
               <div className="relative inline-block">
                 <select
+                  id="defaultStatus"
+                  name="defaultStatus"
                   value={defaultStatus}
                   onChange={(e) => setDefaultStatus(e.target.value)}
                   className="h-11 w-44 appearance-none rounded-lg border border-slate-200 bg-white px-4 pr-10 text-sm font-semibold text-slate-700 shadow-[0_10px_25px_rgba(2,6,23,0.10)] focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 disabled:bg-slate-50 disabled:text-slate-500"
@@ -341,10 +353,12 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">
+              <label htmlFor="appIdFormat" className="mb-2 block text-sm font-extrabold text-slate-900">
                 Application ID Format
               </label>
               <input
+                id="appIdFormat"
+                name="appIdFormat"
                 value="AMS-YYYY-XXXX"
                 readOnly
                 className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-600 shadow-[0_10px_25px_rgba(2,6,23,0.10)] focus:outline-none"

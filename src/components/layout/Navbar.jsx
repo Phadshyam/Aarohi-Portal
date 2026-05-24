@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 
 const NAV_ITEMS = [
   { label: 'Services', id: 'services' },
+  { label: 'Website Development', id: 'website-development' },
   { label: 'Track Application', id: 'track' },
   { label: 'Contact', id: 'contact' },
   { label: 'About', id: 'about' },
@@ -114,8 +115,8 @@ export default function Navbar() {
   }, [])
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-white shadow-sm">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="fixed inset-x-0 top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm transition-all duration-300">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Left: Brand */}
         <button
           type="button"
@@ -166,7 +167,7 @@ export default function Navbar() {
               key={item.id}
               type="button"
               onClick={() => goHomeAndScroll(item.id)}
-              className="text-sm font-medium text-slate-600 transition hover:text-[#1e3a5f] focus:outline-none"
+              className="text-sm font-semibold text-slate-600 transition-all duration-300 hover:-translate-y-0.5 hover:text-[#1e3a5f] focus:outline-none"
             >
               {item.label}
             </button>
@@ -175,7 +176,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={goAdminLogin}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1e3a5f] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#16304f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/25 active:scale-[0.98]"
+            className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#1e3a5f] px-6 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#16304f] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/30 active:scale-[0.98]"
           >
             <Lock className="h-4 w-4" />
             Admin Login
@@ -204,7 +205,7 @@ export default function Navbar() {
                   key={item.id}
                   type="button"
                   onClick={() => goHomeAndScroll(item.id)}
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#1e3a5f]"
+                  className="w-full rounded-xl px-4 py-3 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#1e3a5f]"
                 >
                   {item.label}
                 </button>
@@ -214,7 +215,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={goAdminLogin}
-                  className="w-full rounded-lg bg-[#1e3a5f] px-3 py-2 text-left text-sm font-semibold text-white hover:bg-[#16304f]"
+                  className="w-full rounded-xl bg-[#1e3a5f] px-4 py-3 text-left text-sm font-semibold text-white transition-colors hover:bg-[#16304f]"
                 >
                   Admin Login
                 </button>

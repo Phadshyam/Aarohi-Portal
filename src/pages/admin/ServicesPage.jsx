@@ -510,8 +510,10 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
       <div className="mx-auto max-w-lg space-y-6">
         {/* Core fields */}
         <div>
-          <label className="mb-2 block text-sm font-extrabold text-slate-900">Service Name</label>
+          <label htmlFor="serviceName" className="mb-2 block text-sm font-extrabold text-slate-900">Service Name</label>
           <input
+            id="serviceName"
+            name="serviceName"
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
             className="h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -521,8 +523,10 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-extrabold text-slate-900">Description</label>
+          <label htmlFor="description" className="mb-2 block text-sm font-extrabold text-slate-900">Description</label>
           <textarea
+            id="description"
+            name="description"
             value={form.description}
             onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
             className="min-h-[70px] w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -540,8 +544,10 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">Category</label>
+              <label htmlFor="category_key" className="mb-2 block text-sm font-extrabold text-slate-900">Category</label>
               <select
+                id="category_key"
+                name="category_key"
                 value={form.category_key}
                 onChange={(e) => setForm((p) => ({ ...p, category_key: e.target.value }))}
                 disabled={saving}
@@ -556,8 +562,10 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">Icon</label>
+              <label htmlFor="icon_key" className="mb-2 block text-sm font-extrabold text-slate-900">Icon</label>
               <select
+                id="icon_key"
+                name="icon_key"
                 value={form.icon_key}
                 onChange={(e) => setForm((p) => ({ ...p, icon_key: e.target.value }))}
                 disabled={saving}
@@ -572,10 +580,12 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">
+              <label htmlFor="sort_order" className="mb-2 block text-sm font-extrabold text-slate-900">
                 Homepage Order
               </label>
               <input
+                id="sort_order"
+                name="sort_order"
                 type="number"
                 value={form.sort_order}
                 onChange={(e) => setForm((p) => ({ ...p, sort_order: e.target.value }))}
@@ -589,12 +599,14 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-slate-900">
+              <label htmlFor="badgeInput" className="mb-2 block text-sm font-extrabold text-slate-900">
                 Badges (max 2)
               </label>
 
               <div className="flex gap-2">
                 <input
+                  id="badgeInput"
+                  name="badgeInput"
                   value={badgeInput}
                   onChange={(e) => setBadgeInput(e.target.value)}
                   disabled={saving || normalizeBadges(form.badges, 10).length >= 2}
@@ -648,10 +660,12 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
 
         {/* Other existing fields */}
         <div>
-          <label className="mb-2 block text-sm font-extrabold text-slate-900">
+          <label htmlFor="documents" className="mb-2 block text-sm font-extrabold text-slate-900">
             Required Documents
           </label>
           <textarea
+            id="documents"
+            name="documents"
             value={form.documents}
             onChange={(e) => setForm((p) => ({ ...p, documents: e.target.value }))}
             className="min-h-[70px] w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -661,8 +675,10 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-extrabold text-slate-900">Procedures</label>
+          <label htmlFor="procedures" className="mb-2 block text-sm font-extrabold text-slate-900">Procedures</label>
           <textarea
+            id="procedures"
+            name="procedures"
             value={form.procedures}
             onChange={(e) => setForm((p) => ({ ...p, procedures: e.target.value }))}
             className="min-h-[90px] w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -673,10 +689,12 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
 
         {/* COST (TEXT) */}
         <div>
-          <label className="mb-2 block text-sm font-extrabold text-slate-900">
+          <label htmlFor="cost" className="mb-2 block text-sm font-extrabold text-slate-900">
             Service Cost / Fees (Text Allowed)
           </label>
           <input
+            id="cost"
+            name="cost"
             value={form.cost}
             onChange={(e) => setForm((p) => ({ ...p, cost: e.target.value }))}
             type="text"
@@ -691,10 +709,12 @@ function ServiceFormModal({ open, mode, service, onClose, onSaved }) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-extrabold text-slate-900">
+          <label htmlFor="duration" className="mb-2 block text-sm font-extrabold text-slate-900">
             Completion Duration
           </label>
           <input
+            id="duration"
+            name="duration"
             value={form.duration}
             onChange={(e) => setForm((p) => ({ ...p, duration: e.target.value }))}
             className="h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -799,7 +819,10 @@ export default function ServicesPage() {
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)] sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="relative w-full min-w-0 sm:max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <label htmlFor="searchServices" className="sr-only">Search services</label>
           <input
+            id="searchServices"
+            name="searchServices"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search services…"

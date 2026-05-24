@@ -8,8 +8,10 @@ import {
   Mail,
   MessageCircle,
   PhoneCall,
+  Star,
   ShieldCheck,
   Zap,
+  CheckCircle2 as CheckCircle2Icon
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import CountUp from 'react-countup'
@@ -85,28 +87,47 @@ export function HeroSection({ heroStats }) {
               Trusted government documentation assistance
             </p>
             <h1 className="mt-4 text-[2.25rem] font-extrabold leading-[1.08] tracking-tight text-[#1e3a5f] sm:text-5xl lg:text-[3.25rem]">
-              One platform for essential online services
+              Your trusted portal for online government services
             </h1>
             <p className="mt-6 max-w-2xl text-base font-medium leading-relaxed text-slate-600 sm:text-lg">
-              From Aadhaar, PAN, Passport, GST, and Shop Act to insurance, registrations, and
-              government schemes — apply with confidence and stay informed at every step.
+              Expert assistance for <strong className="font-semibold text-slate-700">PF Services</strong>, <strong className="font-semibold text-slate-700">Aadhaar Update</strong>, <strong className="font-semibold text-slate-700">PAN Card Correction</strong>, <strong className="font-semibold text-slate-700">Shop Act Registration</strong>, <strong className="font-semibold text-slate-700">Food License</strong>, and EPFO Services. Apply with confidence and track your progress at every step.
             </p>
 
-            <ul className="mt-8 grid max-w-xl gap-3 sm:grid-cols-2">
-              {[
-                'Fast & secure application processing',
-                'Track applications easily',
-                'Professional support',
-                'Transparent handling of your documents',
-              ].map((line) => (
-                <li key={line} className="flex items-start gap-2.5 text-sm font-semibold text-slate-700">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-6 flex flex-wrap items-center gap-4">
+              <div className="flex -space-x-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="inline-block h-8 w-8 rounded-full border-2 border-white bg-slate-200 shadow-sm" />
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <span className="text-sm font-bold text-slate-900">4.9/5</span>
+                <span className="text-sm font-medium text-slate-500">Google Reviews</span>
+              </div>
+            </div>
 
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            {/* <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center text-sm font-semibold text-slate-600 border-t border-slate-200/60 pt-6">
+              <div className="flex items-center gap-2">
+                <CheckCircle2Icon className="h-4 w-4 text-emerald-500" />
+                <span>Trusted by 35,000+ customers</span>
+              </div>
+              <div className="hidden h-4 w-px bg-slate-300 sm:block" />
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                <span>Secure document handling</span>
+              </div>
+              <div className="hidden h-4 w-px bg-slate-300 sm:block" />
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-emerald-500" />
+                <span>Fast processing support</span>
+              </div>
+            </div> */}
+
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center animate-fade-in-up">
               <button
                 type="button"
                 onClick={() => navigate('/apply')}
@@ -124,31 +145,47 @@ export function HeroSection({ heroStats }) {
             </div>
           </div>
 
-          <div className="lg:col-span-5">
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              {heroStats.map((s, index) => (
-                <div
-                  key={`${s.label}-${index}`}
-                  className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_8px_28px_rgba(15,23,42,0.08)] backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(15,23,42,0.12)] sm:p-5"
-                >
-                  <p className="text-2xl font-extrabold tracking-tight text-[#1e3a5f] sm:text-3xl">
-                    {typeof s.value === 'number' ? (
-                      <>
-                        <CountUp
-                          start={0}
-                          end={s.value}
-                          duration={2.5}
-                          separator=","
-                        />
-                        +
-                      </>
-                    ) : (
-                      s.value
-                    )}
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">{s.label}</p>
-                </div>
-              ))}
+          <div className="lg:col-span-5 relative">
+            {/* Subtle glow behind the cards */}
+            <div className="absolute inset-0 -z-10 rounded-full bg-[#1e3a5f]/5 blur-[60px]" aria-hidden />
+
+            <div className="grid grid-cols-2 gap-4 sm:gap-5">
+              {heroStats.map((s, index) => {
+                const StatIcon = s.icon || CheckCircle2Icon
+                return (
+                  <div
+                    key={`${s.label}-${index}`}
+                    className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_12px_36px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)] sm:p-6"
+                  >
+                    <div className="absolute top-0 right-0 -mt-2 -mr-2 h-16 w-16 rounded-bl-full bg-slate-50 opacity-50 transition-transform duration-300 group-hover:scale-110" />
+                    <div className="relative z-10 flex items-center justify-between">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#f8fafc] to-[#f1f5f9] border border-slate-200/60 shadow-sm text-[#1e3a5f]">
+                        <StatIcon className="h-5 w-5" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <div className="relative z-10 mt-4">
+                      <p className="text-[1.75rem] font-black tracking-tight text-[#1e3a5f] sm:text-3xl">
+                        {typeof s.value === 'number' ? (
+                          <>
+                            <CountUp
+                              start={0}
+                              end={s.value}
+                              duration={2.5}
+                              separator=","
+                            />
+                            +
+                          </>
+                        ) : (
+                          s.value
+                        )}
+                      </p>
+                      <p className="mt-1.5 text-[0.8rem] font-bold uppercase tracking-wider text-slate-500">
+                        {s.label}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -281,7 +318,7 @@ export function ContactSection({ branding, phone }) {
           <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-amber-700/90">Contact</p>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#1e3a5f] sm:text-4xl">Get in touch</h2>
           <p className="mt-4 text-base font-medium leading-relaxed text-slate-600">
-            Prefer a quick call or WhatsApp? We respond during business hours.
+            Prefer a quick call or WhatsApp? We respond quickly during business hours.
           </p>
         </div>
 
@@ -308,6 +345,7 @@ export function ContactSection({ branding, phone }) {
             </div>
             <h3 className="mt-4 text-base font-extrabold text-slate-900">WhatsApp support</h3>
             <p className="mt-3 text-lg font-extrabold text-emerald-600">{branding?.contact || '—'}</p>
+            <p className="mt-2 text-xs font-semibold text-emerald-600/80 bg-emerald-50 px-2 py-1 rounded-md">Usually responds in 15 mins</p>
           </a>
 
           {branding?.email ? (
@@ -324,9 +362,14 @@ export function ContactSection({ branding, phone }) {
           ) : null}
         </div>
 
-        <p className="mt-10 text-center text-sm font-semibold text-slate-500">
-          Working hours: Monday – Saturday · 10:00 AM – 6:00 PM
-        </p>
+        <div className="mt-12 flex flex-col items-center justify-center space-y-2">
+          <p className="text-center text-sm font-bold text-slate-700">
+            Working hours: Monday – Saturday · 10:00 AM – 6:00 PM
+          </p>
+          <p className="text-center text-xs font-semibold text-slate-500">
+            Sunday closed. Online applications can be submitted 24/7.
+          </p>
+        </div>
       </div>
     </section>
   )

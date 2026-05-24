@@ -2,9 +2,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ChevronDown, FileText, Loader2 } from 'lucide-react'
+import { ChevronDown, FileText, Loader2, Download, Printer } from 'lucide-react'
 
 import { supabasePublic } from '../../lib/supabasePublic'
+import { useBranding } from '../../context/BrandingContext'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { formatCurrency } from '../../utils/helpers'
@@ -40,6 +41,7 @@ export default function ApplyPage() {
   const preselectAppliedRef = useRef(false)
 
   const { services, loading: servicesLoading } = useServices()
+  const { branding } = useBranding()
 
   const [submitting, setSubmitting] = useState(false)
   const [successApp, setSuccessApp] = useState(null)
@@ -180,11 +182,18 @@ export default function ApplyPage() {
       if (trackError) throw trackError
 
       const latest = Array.isArray(tracked) && tracked.length > 0 ? tracked[0] : null
-      if (!latest?.application_id) {
-        setSuccessApp({ application_id: '—' })
-      } else {
-        setSuccessApp({ application_id: latest.application_id })
-      }
+      const appId = latest?.application_id || '—'
+      const status = latest?.status || 'Submitted'
+      
+      setSuccessApp({ 
+        application_id: appId,
+        name: insertPayload.name,
+        phone: insertPayload.phone,
+        service_name: insertPayload.service_name,
+        cost_text: costTextSnapshot,
+        status: status,
+        created_at: new Date().toISOString()
+      })
 
       resetForm()
     } catch (err) {
@@ -200,7 +209,8 @@ export default function ApplyPage() {
   const costText = selectedService ? getServiceCostDisplay(selectedService) : '—'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+    <div className="min-h-screen bg-gray-50 print:hidden">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(2,6,23,0.10)] sm:p-8">
             <div className="flex items-start gap-3">
@@ -238,15 +248,22 @@ export default function ApplyPage() {
                 </p>
 
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                  <Button onClick={() => navigate('/track')} className="w-full sm:w-auto">
-                    Track Application
+                  <Button onClick={() => window.print()} className="w-full sm:w-auto bg-[#1e3a5f] hover:bg-[#16304f] text-white">
+                    <Printer className="mr-2 h-4 w-4" /> Download / Print Receipt
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => navigate('/track')}
+                    className="w-full sm:w-auto"
+                  >
+                    Track App
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={() => setSuccessApp(null)}
                     className="w-full sm:w-auto"
                   >
-                    Submit Another
+                    Close
                   </Button>
                 </div>
               </div>
@@ -254,6 +271,7 @@ export default function ApplyPage() {
               <form onSubmit={handleSubmit} className="mt-6 space-y-5">
                 <Input
                   label="Name"
+                  id="name"
                   name="name"
                   value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
@@ -264,6 +282,7 @@ export default function ApplyPage() {
 
                 <Input
                   label="Phone"
+                  id="phone"
                   name="phone"
                   type="tel"
                   value={form.phone}
@@ -275,11 +294,13 @@ export default function ApplyPage() {
                 />
 
                 <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  <label htmlFor="serviceId" className="mb-1.5 block text-sm font-semibold text-slate-700">
                     Service
                   </label>
                   <div className="relative">
                     <select
+                      id="serviceId"
+                      name="serviceId"
                       value={form.serviceId}
                       onChange={(e) => setForm((p) => ({ ...p, serviceId: e.target.value }))}
                       className={[
@@ -312,6 +333,8 @@ export default function ApplyPage() {
 
                 <Input
                   label="Cost / Fees"
+                  id="costText"
+                  name="costText"
                   value={costText}
                   readOnly
                   hint="Auto-fetched from service"
@@ -337,5 +360,74 @@ export default function ApplyPage() {
           </div>
         </div>
     </div>
+
+    {/* Print-only Receipt Layout */}
+    {successApp && (
+      <div className="hidden print:block p-10 bg-white text-black min-h-screen font-sans">
+        <div className="mx-auto max-w-3xl border border-gray-300 rounded-xl p-8 shadow-sm">
+          {/* Header */}
+          <div className="flex justify-between items-center border-b border-gray-200 pb-6 mb-6">
+            <div>
+              {branding?.logo_wordmark_url || branding?.logo_wordmark_dark_url ? (
+                <img 
+                  src={branding.logo_wordmark_url || branding.logo_wordmark_dark_url} 
+                  alt={branding.business_name || 'Business Logo'} 
+                  className="h-12 w-auto object-contain"
+                />
+              ) : (
+                <div>
+                  <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">{branding?.business_name || 'Aarohi Multiservices'}</h1>
+                  {branding?.contact && <p className="text-sm text-gray-500 mt-1">Contact: {branding.contact}</p>}
+                  {branding?.email && <p className="text-sm text-gray-500">Email: {branding.email}</p>}
+                </div>
+              )}
+            </div>
+            <div className="text-right">
+              <h2 className="text-3xl font-black text-gray-200 uppercase tracking-widest">RECEIPT</h2>
+              <p className="mt-2 text-sm font-semibold text-gray-600">Date: {new Date(successApp.created_at).toLocaleDateString()}</p>
+            </div>
+          </div>
+
+          {/* Customer & App Details */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Applicant Details</p>
+              <h3 className="text-lg font-bold text-gray-900">{successApp.name}</h3>
+              <p className="text-gray-600 mt-1">Phone: {successApp.phone}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Application ID</p>
+              <p className="text-xl font-black text-[#1e3a5f] bg-[#1e3a5f]/5 inline-block px-3 py-1 rounded-lg border border-[#1e3a5f]/10">{successApp.application_id}</p>
+            </div>
+          </div>
+
+          {/* Service Box */}
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Service Applied</p>
+            <div className="flex justify-between items-center">
+              <h4 className="text-xl font-bold text-gray-900">{successApp.service_name}</h4>
+              <div className="text-right">
+                <p className="text-xs font-semibold text-gray-500">Amount / Fees</p>
+                <p className="text-xl font-bold text-gray-900">{successApp.cost_text || '—'}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex gap-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                <span className="text-sm font-semibold text-gray-700">Status: {successApp.status}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-16 text-center border-t border-gray-200 pt-8">
+            <p className="text-sm font-semibold text-gray-800">Thank you for choosing {branding?.business_name || 'us'}!</p>
+            <p className="mt-1 text-xs text-gray-500">You can track your application status anytime using your Application ID.</p>
+            <p className="mt-1 text-[10px] text-gray-400">This is a computer-generated acknowledgement receipt and does not require a signature.</p>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }

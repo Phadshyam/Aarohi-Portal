@@ -94,6 +94,8 @@ export default function TrackPage() {
               <form onSubmit={handleSearch} className="mt-6 space-y-4">
                 <Input
                   label="Application ID / Phone Number"
+                  id="query"
+                  name="query"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Enter Application ID or Phone Number"

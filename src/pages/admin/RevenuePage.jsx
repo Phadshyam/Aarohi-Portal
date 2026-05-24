@@ -72,6 +72,9 @@ export default function RevenuePage() {
   const [serviceFilter, setServiceFilter] = useState('all')
   const [serviceOptions, setServiceOptions] = useState([])
   const [tableRows, setTableRows] = useState([])
+  
+  const [topServices, setTopServices] = useState([])
+  const [loadingTop, setLoadingTop] = useState(true)
 
   const fetchStats = async () => {
     try {
@@ -103,6 +106,20 @@ export default function RevenuePage() {
       setServiceOptions((data || []).map((s) => s.name))
     } catch (err) {
       console.error('Services list error:', err)
+    }
+  }
+
+  const fetchTopServices = async () => {
+    try {
+      setLoadingTop(true)
+      const { data, error } = await supabase.rpc('get_top_earning_services', { limit_val: 5 })
+      if (!error) {
+        setTopServices(data || [])
+      }
+    } catch (err) {
+      console.error('Top services error:', err)
+    } finally {
+      setLoadingTop(false)
     }
   }
 
@@ -151,6 +168,7 @@ export default function RevenuePage() {
     if (!isAdmin) return
     fetchStats()
     fetchServices()
+    fetchTopServices()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin])
 
@@ -203,6 +221,34 @@ export default function RevenuePage() {
         />
       </div>
 
+      {/* Top Earning Services */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-[0_8px_30px_rgba(2,6,23,0.06)]">
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Top Earning Services</h2>
+        {loadingTop ? (
+          <div className="space-y-3">
+            {[1,2,3].map((i) => (
+              <div key={i} className="h-10 w-full animate-pulse rounded bg-slate-100" />
+            ))}
+          </div>
+        ) : topServices.length === 0 ? (
+          <p className="text-sm text-slate-500">No revenue data available.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {topServices.map((ts) => (
+              <div key={ts.service_name} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 border border-slate-100 transition hover:bg-slate-100">
+                <div>
+                  <p className="font-semibold text-slate-800">{ts.service_name}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{ts.application_count} applications</p>
+                </div>
+                <div className="font-bold text-[#1e3a5f] text-right">
+                  {formatCurrency(ts.total_revenue)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Filters row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <div className="relative">
@@ -226,7 +272,10 @@ export default function RevenuePage() {
         </div>
 
         <div className="relative">
+          <label htmlFor="serviceFilter" className="sr-only">Service Filter</label>
           <select
+            id="serviceFilter"
+            name="serviceFilter"
             value={serviceFilter}
             onChange={(e) => { setServiceFilter(e.target.value); setPage(1); }}
             className="h-10 appearance-none rounded-lg border border-slate-200 bg-slate-50 px-5 pr-10 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"
@@ -242,7 +291,10 @@ export default function RevenuePage() {
         </div>
 
         <div className="relative">
+          <label htmlFor="statusFilter" className="sr-only">Status Filter</label>
           <select
+            id="statusFilter"
+            name="statusFilter"
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
             className="h-10 appearance-none rounded-lg border border-slate-200 bg-slate-50 px-5 pr-10 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#1e3a5f] focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20"

@@ -84,7 +84,7 @@ export default function Footer() {
               <a
                 href="https://aarohimultiservices.in"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/90 transition-colors duration-200 hover:border-amber-400/30 hover:bg-white/10"
               >
                 <Globe className="h-4 w-4 shrink-0 text-amber-400/90" />
@@ -93,7 +93,7 @@ export default function Footer() {
               {/* <a
                 href="https://maps.google.com"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/90 transition-colors duration-200 hover:border-amber-400/30 hover:bg-white/10"
               >
                 <MapPin className="h-4 w-4 shrink-0 text-amber-400/90" />

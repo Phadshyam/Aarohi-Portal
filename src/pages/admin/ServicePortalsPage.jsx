@@ -549,7 +549,10 @@ export default function ServicePortalsPage() {
           <div className="w-full max-w-md shrink-0 lg:max-w-sm">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <label htmlFor="searchPortals" className="sr-only">Search portals</label>
               <input
+                id="searchPortals"
+                name="searchPortals"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by service name or category..."
